@@ -23,24 +23,44 @@ int main()
     printf("Données recu du serveur sont numéro du joueur : %d\n", numero_joueur);
     printf("Les data du labyrinthe : \n%s\n\n", labyData);
 
-/*
-*/
-    int c_mon_tour_jouer = numero_joueur;
+    t_return_code resultat = NORMAL_MOVE;
+    int c_mon_tour_jouer = numero_joueur; 
+    char coup_envoi[MAX_GET_MOVE];
+    char coup_recu[MAX_GET_MOVE];
+    char message_serveur[MAX_MESSAGE];
 
-    int rotation_case
-    while (il faut condition ici)
+    while (resultat == NORMAL_MOVE)
     {
-        printf("Affichage du labyrinthe \n");
+        printf("\nAffichage du labyrinthe :\n");
         printLabyrinth();
 
-        if (c_mon_tour_jouer == numero_joueur)
+        if (c_mon_tour_jouer == 0) 
         {
-            sendMove()
-        }else
-        {
-        }
+            int type, indice, rot, x, y;
+            printf("Entre coup chef : ");
+            scanf("%d %d %d %d %d", &type, &indice, &rot, &x, &y);
 
+            sprintf(coup_envoi, "%d %d %d %d %d", type, indice, rot, x, y);
+
+            resultat = sendMove(coup_envoi, message_serveur);
+
+            c_mon_tour_jouer = 1; 
+        }
+        else 
+        {
+            printf("Attente du coup de l'adversaire\n");
+
+            // On récupère le coup de l'adversaire
+            resultat = getMove(coup_recu, message_serveur);
+
+            printf("L'adversaire a joué : %s\n", coup_recu);
+
+            c_mon_tour_jouer = 0;
+        }
     }
+
+    // Affichage de la raison de la fin (gagné ou perdu)
+    printf("Fin de la partie ! Raison : %s\n", message_serveur); 
     // Le free est inutile mais je le meme comme
     free(labyData);
     closeConnection();
