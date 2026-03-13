@@ -22,45 +22,58 @@ int main()
     numero_joueur = getLabyrinth(labyData);
     printf("Données recu du serveur sont numéro du joueur : %d\n", numero_joueur);
     printf("Les data du labyrinthe : \n%s\n\n", labyData);
-initAffichage(sizeX,sizeY);
+    initAffichage(sizeX, sizeY);
     t_return_code resultat = NORMAL_MOVE;
-    int c_mon_tour_jouer = numero_joueur; 
+    int c_mon_tour_jouer = numero_joueur;
     char coup_envoi[MAX_GET_MOVE];
     char coup_recu[MAX_GET_MOVE];
     char message_serveur[MAX_MESSAGE];
 
+    int p0_x = 0, p0_y = 0; // À initialiser selon les règles (souvent 0,0 et 6,6)
+    int p1_x = sizeX - 1, p1_y = sizeY - 1;
     while (resultat == NORMAL_MOVE)
     {
         printf("\nAffichage du labyrinthe :\n");
         printLabyrinth();
-afficheLabyrinthe(labyData, 500,sizeX,sizeY);
-        if (c_mon_tour_jouer == 0) 
+        afficheLabyrinthe(labyData, 500, sizeX, sizeY, p0_x, p0_y, p1_x, p1_y);
+        if (c_mon_tour_jouer == 0)
         {
             int type, indice, rot, x, y;
             printf("Entre coup chef : ");
             scanf("%d %d %d %d %d", &type, &indice, &rot, &x, &y);
-
+            p0_x = x;
+            p0_y = y;
             sprintf(coup_envoi, "%d %d %d %d %d", type, indice, rot, x, y);
 
             resultat = sendMove(coup_envoi, message_serveur);
 
-            c_mon_tour_jouer = 1; 
+            c_mon_tour_jouer = 1;
         }
-        else 
+        else
         {
             printf("Attente du coup de l'adversaire\n");
 
             // On récupère le coup de l'adversaire
             resultat = getMove(coup_recu, message_serveur);
 
-            printf("L'adversaire a joué : %s\n", coup_recu);
+            // printf("L'adversaire a joué : %s\n", coup_recu);
 
             c_mon_tour_jouer = 0;
+
+            // EXTRACTION : On décode la chaîne "3 5 1 20 8"
+            int t, i, r, ax, ay;
+            sscanf(coup_recu, "%d %d %d %d %d", &t, &i, &r, &ax, &ay);
+
+            // On met à jour les coordonnées de l'adversaire
+            p1_x = ax;
+            p1_y = ay;
+
+            printf("L'adversaire a joué vers : %d %d\n", p1_x, p1_y);
         }
     }
 
     // Affichage de la raison de la fin (gagné ou perdu)
-    printf("Fin de la partie ! Raison : %s\n", message_serveur); 
+    printf("Fin de la partie ! Raison : %s\n", message_serveur);
     // Le free est inutile mais je le meme comme
     free(labyData);
     closeConnection();
