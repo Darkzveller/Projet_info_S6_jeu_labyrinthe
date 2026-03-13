@@ -1,13 +1,14 @@
 # Compilateur et options
 # --------------------------
 CC = gcc                 # Le compilateur C à utiliser (ici GCC)
-CFLAGS = -Wall -MMD      # Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
-LIBS =         # Bibliothèques à lier (ici X11 pour l'affichage graphique)
-
-LIBSDIR =                # Répertoires supplémentaires pour les bibliothèques (vide ici)
+INCLUDE_DIRS := $(shell find . -type d -not -path "./.*") # Répertoires supplémentaires pour les bibliothèques (vide ici)
+CFLAGS = -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak# Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
+LIBS =# Bibliothèques à lier (ici X11 pour l'affichage graphique)
 
 # Fichiers du projet
-SRC = $(wildcard *.c)    # Liste de tous les fichiers source .c du dossier courant
+# SRC = $(wildcard *.c Variable/*.c)    
+SRC = $(shell find . -name "*.c") # Liste de tous les fichiers source .c du dossier courant
+
 OBJ = $(SRC:.c=.o)       # Liste des fichiers objets correspondants aux .c
 DEP = $(OBJ:.o=.d)       # Fichiers de dépendances générés automatiquement
 
@@ -45,7 +46,7 @@ $(EXEC): $(OBJ)          # L'exécutable dépend de tous les objets
 
 #Sous linux
 clean:
-	rm -f *.o             
+	rm -rf *.o *.d            
 #Sous Windows
 cleanwin:
 	powershell -Command "Remove-Item *.o, *.d -ErrorAction SilentlyContinue"
@@ -55,7 +56,7 @@ cleanwin:
 
 # Sous linux
 mproper:
-	rm -f $(EXEC) *.o *.out *.d      		
+	rm -rf $(EXEC) *.o *.out *.d      		
 # Sous Windows
 mproperwin:
 	powershell -Command "Remove-Item *.exe, *.o, *.out, *.d -ErrorAction SilentlyContinue"
