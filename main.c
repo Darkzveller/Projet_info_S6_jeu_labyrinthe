@@ -17,10 +17,10 @@ int main()
     printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", labyrinthName, sizeX, sizeY);
     
     
-    int taille_buffer = (sizeX * sizeY + 5) * 11;
-    char *labyData = malloc(taille_buffer * sizeof(char));
-    int donnee_recu = getLabyrinth(labyData);
-    printf("Données recu du serveur sont numéro du joueur : %d\n", donnee_recu);
+    taille_buffer = (sizeX * sizeY + 5) * 11;
+    labyData = malloc(taille_buffer * sizeof(char));
+    numero_joueur = getLabyrinth(labyData);
+    printf("Données recu du serveur sont numéro du joueur : %d\n", numero_joueur);
     printf("Les data du labyrinthe : \n%s\n\n",labyData);
 
 

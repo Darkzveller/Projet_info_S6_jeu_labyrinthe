@@ -1,8 +1,8 @@
 # Compilateur et options
 # --------------------------
 CC = gcc                 # Le compilateur C à utiliser (ici GCC)
-INCLUDE_DIRS := $(shell find . -type d -not -path "./.*") # Répertoires supplémentaires pour les bibliothèques (vide ici)
-CFLAGS = -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak# Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
+INCLUDE_DIRS_LIBS := $(shell find . -type d -not -path "./.*") # Répertoires supplémentaires pour les bibliothèques (vide ici)
+CFLAGS = -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS_LIBS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak# Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
 LIBS =# Bibliothèques à lier (ici X11 pour l'affichage graphique)
 
 # Fichiers du projet
@@ -46,7 +46,11 @@ $(EXEC): $(OBJ)          # L'exécutable dépend de tous les objets
 
 #Sous linux
 clean:
-	rm -rf *.o *.d            
+	rm -f *.o *.d
+    
+    # Supprimer tous les fichiers générés dans tous les sous-dossiers
+	find . -type f \( -name "*.o" -o -name "*.d" -o \) -exec rm -f {} +     		
+ 
 #Sous Windows
 cleanwin:
 	powershell -Command "Remove-Item *.o, *.d -ErrorAction SilentlyContinue"
@@ -56,7 +60,9 @@ cleanwin:
 
 # Sous linux
 mproper:
-	rm -rf $(EXEC) *.o *.out *.d      		
+	rm -f $(EXEC) *.o *.out *.d 
+    # Supprimer tous les fichiers générés dans tous les sous-dossiers
+	find . -type f \( -name "*.o" -o -name "*.d" -o -name "*.out" \) -exec rm -f {} +     		
 # Sous Windows
 mproperwin:
 	powershell -Command "Remove-Item *.exe, *.o, *.out, *.d -ErrorAction SilentlyContinue"

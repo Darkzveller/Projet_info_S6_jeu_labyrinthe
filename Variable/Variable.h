@@ -15,4 +15,10 @@ extern char *type_partie_choisi[4];
 extern char labyrinthName[50]; 
 extern int sizeX ;
 extern int sizeY ;
+
+// Données en temps réels du labyrinthe
+extern char *labyData; 
+extern int numero_joueur ; 
+extern int taille_buffer ;
+
 #endif

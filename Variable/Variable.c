@@ -13,3 +13,8 @@ char *type_partie_choisi[4] = {"TRAINING DONTMOVE", "TRAINING RANDOM","TRAINING 
 char labyrinthName[50]; 
 int sizeX = 0;
 int sizeY = 0;
+
+// Données en temps réels du labyrinthe
+char *labyData; 
+int numero_joueur = 0;
+int taille_buffer = 0;
