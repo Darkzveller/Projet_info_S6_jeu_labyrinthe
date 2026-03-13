@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "jai reussi a jouer" && git push
+git status && git add . && git commit -m "affichage dynamique avec aide IA" && git push

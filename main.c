@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "clientAPI.h"
 #include "labyrinthAPI.h"
-
+#include "affichage.h"
 int main()
 {
     printf("caca\n");
@@ -22,7 +22,7 @@ int main()
     numero_joueur = getLabyrinth(labyData);
     printf("Données recu du serveur sont numéro du joueur : %d\n", numero_joueur);
     printf("Les data du labyrinthe : \n%s\n\n", labyData);
-
+initAffichage(sizeX,sizeY);
     t_return_code resultat = NORMAL_MOVE;
     int c_mon_tour_jouer = numero_joueur; 
     char coup_envoi[MAX_GET_MOVE];
@@ -33,7 +33,7 @@ int main()
     {
         printf("\nAffichage du labyrinthe :\n");
         printLabyrinth();
-
+afficheLabyrinthe(labyData, 500,sizeX,sizeY);
         if (c_mon_tour_jouer == 0) 
         {
             int type, indice, rot, x, y;
