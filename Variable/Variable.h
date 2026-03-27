@@ -7,15 +7,20 @@
 
 #ifndef Variable_H
 #define Variable_H
+// Parametre physiques du labyrinthe
+#define NBR_TUILES 25
 
-#define ACTIVE_AFFICHAGE_LABY 0
+// Define permettant d'activer ou desactiver les prints
+#define DEBUG_CONNECT_SERV 0
+#define DEBUG_DATA_STRUCT_LABY 0
+#define ACTIVE_AFFICHAGE_LABY 1
+#define DEBUG_POS_TUILES 1
 
 // Information du serveur
 extern const char *nom_serveur;
 extern const int port_serveur;
 extern char *nom_bot_moi;
 
-// Information du labyrinthe
 #define BOT_BOUGE_PAS 0
 #define BOT_ALEATOIRE 1
 #define BOT_BASIC 2
@@ -52,5 +57,18 @@ typedef struct
 } t_laby;
 
 extern t_laby laby;
+// Structure de donnees des tuiles
+typedef struct
+{    
+    int x[NBR_TUILES];
+    int y[NBR_TUILES];
+    int presence_mur[NBR_TUILES];
+    int num_tresor[NBR_TUILES];
+
+} t_tuiles;
+
+extern t_tuiles tuiles;
+
+
 
 #endif

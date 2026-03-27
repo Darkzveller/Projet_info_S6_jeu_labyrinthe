@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "ajout def pour activer desactiver certaine partie du code" && git push
+git status && git add . && git commit -m "Ajout bibliotheque mouvement + récuperation position tuiles" && git push

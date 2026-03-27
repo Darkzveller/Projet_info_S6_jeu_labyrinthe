@@ -5,26 +5,35 @@
 #include "clientAPI.h"
 #include "labyrinthAPI.h"
 #include "affichage.h"
+
+
 int main()
 {
-
     printf("caca\n");
-
+#if DEBUG_CONNECT_SERV
     printf("Tentative de connexion au serveur \n");
+#endif
     connectToServer(nom_serveur, port_serveur, nom_bot_moi);
+#if DEBUG_CONNECT_SERV
     printf("Connecter au serveur de jeu en tant que %s \n", nom_bot_moi);
-
-    printf("Attente d'une partie %s...\n", type_partie_choisi[BOT_BOUGE_PAS]);
+    printf("Choix partie %s\n", type_partie_choisi[BOT_BOUGE_PAS]);
+#endif
 
     waitForLabyrinth(type_partie_choisi[BOT_BOUGE_PAS], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+
+#if DEBUG_DATA_STRUCT_LABY
     printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
+#endif
 
     taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
     laby.labyData = malloc(taille_buffer * sizeof(char));
     laby.tour_joueur = getLabyrinth(laby.labyData);
 
-    printf("Données recu du serveur sont numéro du joueur : %d\n", laby.tour_joueur);
+#if DEBUG_DATA_STRUCT_LABY
+    printf("Données recu du serveur, mon numéro du joueur : %d\n", laby.tour_joueur);
     printf("Les data du labyrinthe : \n%s\n\n", laby.labyData);
+#endif
+
 #if ACTIVE_AFFICHAGE_LABY
     initAffichage(laby.sizeX, laby.sizeY);
 #endif
@@ -40,9 +49,12 @@ int main()
     {
         printf("\nAffichage du labyrinthe :\n");
         printLabyrinth();
+
 #if ACTIVE_AFFICHAGE_LABY
         afficheLabyrinthe(laby.labyData, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
 #endif
+        
+
         if (laby.tour_joueur == 0)
         {
             printf("Entre coup chef : ");
