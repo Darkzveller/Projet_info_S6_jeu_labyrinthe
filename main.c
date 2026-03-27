@@ -5,8 +5,20 @@
 #include "clientAPI.h"
 #include "labyrinthAPI.h"
 #include "affichage.h"
+    typedef struct
+    {
+        int x;
+        int y;
+        int type_insertion;
+        int indice;
+        int rotation;
+    } t_joueur;
+
 int main()
 {
+
+    t_joueur yek = {0, 0, 0, 0, 0};
+
     printf("caca\n");
 
     printf("Tentative de connexion au serveur \n");
@@ -23,27 +35,35 @@ int main()
     printf("Données recu du serveur sont numéro du joueur : %d\n", numero_joueur);
     printf("Les data du labyrinthe : \n%s\n\n", labyData);
     initAffichage(sizeX, sizeY);
+
     t_return_code resultat = NORMAL_MOVE;
     int c_mon_tour_jouer = numero_joueur;
     char coup_envoi[MAX_GET_MOVE];
     char coup_recu[MAX_GET_MOVE];
     char message_serveur[MAX_MESSAGE];
 
-    int p0_x = 0, p0_y = 0; // À initialiser selon les règles (souvent 0,0 et 6,6)
+    // int p0_x = 0, p0_y = 0;
+    yek.x = 0;
+    yek.y = 0;
+
     int p1_x = sizeX - 1, p1_y = sizeY - 1;
+
     while (resultat == NORMAL_MOVE)
     {
         printf("\nAffichage du labyrinthe :\n");
         printLabyrinth();
-        afficheLabyrinthe(labyData, 500, sizeX, sizeY, p0_x, p0_y, p1_x, p1_y);
+
+        afficheLabyrinthe(labyData, 500, sizeX, sizeY, yek.x, yek.y, p1_x, p1_y);
+
         if (c_mon_tour_jouer == 0)
         {
             int type, indice, rot, x, y;
             printf("Entre coup chef : ");
-            scanf("%d %d %d %d %d", &type, &indice, &rot, &x, &y);
-            p0_x = x;
-            p0_y = y;
-            sprintf(coup_envoi, "%d %d %d %d %d", type, indice, rot, x, y);
+            scanf("%d %d %d %d %d", &yek.type_insertion, &yek.indice, &yek.rotation, &yek.x, &yek.y);
+            // p0_x = x;
+            // p0_y = y;
+            // sprintf(coup_envoi, "%d %d %d %d %d", type, indice, rot, x, y);
+            sprintf(coup_envoi, "%d %d %d %d %d", yek.type_insertion, yek.indice, yek.rotation, yek.x, yek.y);
 
             resultat = sendMove(coup_envoi, message_serveur);
 
@@ -56,25 +76,24 @@ int main()
             // On récupère le coup de l'adversaire
             resultat = getMove(coup_recu, message_serveur);
 
-            // printf("L'adversaire a joué : %s\n", coup_recu);
+            printf("L'adversaire a joué : %s\n", coup_recu);
 
             c_mon_tour_jouer = 0;
 
-            // EXTRACTION : On décode la chaîne "3 5 1 20 8"
-            int t, i, r, ax, ay;
-            sscanf(coup_recu, "%d %d %d %d %d", &t, &i, &r, &ax, &ay);
+            int type_adversaire, indide_adversaire, rotation__adversaire, ax_adversaire, ay_adversaire;
+            sscanf(coup_recu, "%d %d %d %d %d", &type_adversaire, &indide_adversaire, &rotation__adversaire, &ax_adversaire, &ay_adversaire);
 
             // On met à jour les coordonnées de l'adversaire
-            p1_x = ax;
-            p1_y = ay;
+            p1_x = ax_adversaire;
+            p1_y = ay_adversaire;
 
-            printf("L'adversaire a joué vers : %d %d\n", p1_x, p1_y);
+            printf("L'adversaire a joué vers : type : %d indice : %d rotation: %d x : %d y : %d\n", type_adversaire, indide_adversaire, rotation__adversaire, p1_x, p1_y);
         }
     }
 
-    // Affichage de la raison de la fin (gagné ou perdu)
+    // Affichage de la raison de la fin (gagné ou autre)
     printf("Fin de la partie ! Raison : %s\n", message_serveur);
-    // Le free est inutile mais je le meme comme
+
     free(labyData);
     closeConnection();
     return 0;

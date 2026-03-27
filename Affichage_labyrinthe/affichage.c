@@ -177,7 +177,7 @@ int afficheLabyrinthe(char *labyData, int tempo, int TAILLE_X, int TAILLE_Y,
     /* 5. DESSIN DES PIONS */
     XSetForeground(display, gc, couleurs[ROUGE]);
     XFillArc(display, pix, gc, (x1 + 1) * CASE + 15, (y1 + 1) * CASE + 15, 30, 30, 0, 360 * 64);
-    XSetForeground(display, gc, couleurs[VERT]);
+    XSetForeground(display, gc, couleurs[BLEU]);
     XFillArc(display, pix, gc, (x2 + 1) * CASE + 15, (y2 + 1) * CASE + 15, 30, 30, 0, 360 * 64);
 
     /* 6. ENVOI FINAL */

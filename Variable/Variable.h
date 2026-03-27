@@ -1,6 +1,7 @@
 #ifndef Variable_H
 #define Variable_H
 
+#define ACTIVE_AFFICHAGE_LABY 1
 
 extern const char *nom_serveur;
 extern const int port_serveur;

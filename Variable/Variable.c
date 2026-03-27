@@ -6,10 +6,10 @@
 // Information du Serveur
 const char *nom_serveur = "vps-1a2cee88.vps.ovh.net";
 const int port_serveur = 1234;
-char *nom_bot_moi = "YEK";
+char *nom_bot_moi = "YEKS";
 
 // Information du labyrinthe
-char *type_partie_choisi[4] = {"TRAINING DONTMOVE timeout=10000", "TRAINING RANDOM", "TRAINING BASIC", 0};
+char *type_partie_choisi[4] = {"TRAINING DONTMOVE timeout=10000 display=debug", "TRAINING RANDOM", "TRAINING BASIC", 0};
 char labyrinthName[50];
 int sizeX = 0;
 int sizeY = 0;

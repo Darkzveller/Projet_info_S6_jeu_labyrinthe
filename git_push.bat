@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "affichage numéro ligne et colonne" && git push
+git status && git add . && git commit -m "ajout struct joueur" && git push
