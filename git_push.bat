@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "Ajout bibliotheque mouvement + récuperation position tuiles" && git push
+git status && git add . && git commit -m "MAJ avant de venir tout casser avec lse fichier du TP2" && git push

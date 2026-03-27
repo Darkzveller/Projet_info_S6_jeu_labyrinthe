@@ -5,6 +5,8 @@
 #include "clientAPI.h"
 #include "labyrinthAPI.h"
 #include "affichage.h"
+#include "Mouvement.h"
+
 
 
 int main()

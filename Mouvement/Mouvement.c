@@ -28,9 +28,9 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
         }
     }
 #if DEBUG_POS_TUILES
-    for (int i = 0; i < NBR_TUILES; i++)
+    for (int i = 1; i < NBR_TUILES; i++)
     {
-        printf("item %d px : %d py %d", i, tuiles->x[i], tuiles->y[i]);
+        printf("item %2d px : %2d py %2d", i, tuiles->x[i], tuiles->y[i]);
         printf("\n");
     }
 #endif
