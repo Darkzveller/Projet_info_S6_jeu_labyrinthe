@@ -67,8 +67,12 @@ typedef struct
 
 } t_tuiles;
 
-extern t_tuiles tuiles;
+extern t_tuiles tuiles_tresor;
 
-
+typedef struct {
+    int x;
+    int y;
+} t_coord;
+extern t_coord chemin_a_dessiner[500];
 
 #endif
