@@ -21,6 +21,7 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
                 {
                     tuiles->x[item] = x;
                     tuiles->y[item] = y;
+                    tuiles->presence_mur[item] = (nord << 3) | (sud << 2) | (ouest << 1) | (est << 0);
                 }
 
                 ptr += offset;
@@ -35,231 +36,243 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
     }
 #endif
 }
-/*
 
+void transfer_labydata_to_laby_update(t_laby *laby, bool activate_print)
+{
+    char *ptr = laby->labyData;
+    int nord = 0;
+    int est = 0;
+    int sud = 0;
+    int ouest = 0;
+    int item = 0;
+    int offset = 0;
 
-int main(void) {
+    laby->laby_update = (int **)malloc(((laby->sizeX * laby->sizeY + 5) * 11) * sizeof(int *));
 
-    int tab_representative_labyrinthe[TAILLE_X][TAILLE_Y];
-
-    printf("Caca test print\n");
-
-    //pré-charger le labyrinthe depuis le fichier
-    if (!build_labyrinthe("laby2.txt", tab_representative_labyrinthe)) {
-        printf("Error chargement fichier\n");
-        return 1;
+    for (int i = 0; i < ((laby->sizeX * laby->sizeY + 5) * 11); i++)
+    {
+        laby->laby_update[i] = malloc(((laby->sizeX * laby->sizeY + 5) * 11) * sizeof(int));
     }
 
-    //Initialisation affichage 
-    if (!initAffichage()) {
-        printf("Error initialisation de l'affichage\n");
-        return 1;
+    for (int y = 0; y < laby->sizeY; y++)
+    {
+        for (int x = 0; x < laby->sizeX; x++)
+        {
+            if (sscanf(ptr, "%d %d %d %d %d%n", &nord, &est, &sud, &ouest, &item, &offset) >= 5)
+            {
+                /*
+                 On utilise 16 bits au total :
+                 - 4 bits pour les murs (Nord, Est, Sud, Ouest)
+                 - 12 bits pour l'identifiant de l'item (trésor)
+
+                 Structure des bits :
+                 [ N E S O ] [     ITEM     ]
+                   4 bits        8 bits
+
+                 Chaque mur vaut 0 ou 1
+                 ITEM peut aller de 0 à 256
+                */
+                laby->laby_update[x][y] =
+                    (nord << SHIFT_BIT_NORD) |
+                    (est << SHIFT_BIT_EST) |
+                    (sud << SHIFT_BIT_SUD) |
+                    (ouest << SHIFT_BIT_OUEST) |
+                    (item);
+                ptr += offset;
+            }
+        }
     }
+    if (activate_print == true)
+    {
+        printf("Laby data que j'obtiens\n");
 
-    // Coordonnées de départ et d'arrivée qu'on archive
-    int couple_cordonne_depart[2] = {coord_x_depart, coord_y_depart};
-    int couple_cordonne_arrivee[2] = {coord_x_arrivee, coord_y_arrivee};
+        for (int y = 0; y < laby->sizeY; y++)
+        {
+            for (int x = 0; x < laby->sizeX; x++)
+            {
 
-    // Phase d'expansion
-    bool chemin_existe = phaseExpansion(tab_representative_labyrinthe, coord_x_depart, coord_y_depart, coord_x_arrivee, coord_y_arrivee);
+                // int v = laby->laby_update[x][y];
+                int nord = (laby->laby_update[x][y] >> SHIFT_BIT_NORD) & 1;
+                int est = (laby->laby_update[x][y] >> SHIFT_BIT_EST) & 1;
+                int sud = (laby->laby_update[x][y] >> SHIFT_BIT_SUD) & 1;
+                int ouest = (laby->laby_update[x][y] >> SHIFT_BIT_OUEST) & 1;
 
-    if (chemin_existe) {
-        printf("Chemin trouvé !!! B)\n");
-    } else {
-        printf("Pas de chemin possible entre départ et arrivée\n");
+                int item = (laby->laby_update[x][y] >> 0) & 0xFF;
+                if ((x == (laby->sizeX)-1) && (y == (laby->sizeY-1)))
+                {
+                printf("\nLa tuile supplementaire est celle ci : %d%d%d%d %d ", nord, est, sud, ouest, item);
+
+                }
+                else
+                {
+                    printf("%d%d%d%d %d ", nord, est, sud, ouest, item);
+                }
+            }
+            printf("\n");
+        }
     }
-
-    // Phase de remontée
-    bool remontée_ok = phaseRemontee(tab_representative_labyrinthe, coord_x_depart, coord_y_depart, coord_x_arrivee, coord_y_arrivee);
-    if (!remontée_ok) {
-        printf("Erreur lors de la remontée du chemin\n");
-    } else {
-        printf("Chemin correctement tracé dans le labyrinthe\n");
-    }
-
-    // Nettoie le labyrinthe
-    nettoyerLabyrinthe(tab_representative_labyrinthe);
-
-    // Afficher le labyrinthe (avec le chemin marqué)
-    afficheLabyrinthe(tab_representative_labyrinthe, (int[2]){coord_x_depart, coord_y_depart},(int[2]){coord_x_arrivee, coord_y_arrivee}, 0);
-
-    return 0;
 }
-*/
 
 // Renvoie les coordonnées de la case voisine à partir d'une case (x, y) et d'une direction d
 // d = 0 : Nord, 1 : Est, 2 : Sud, 3 : Ouest
- void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine)
+//  void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine)
+#define NORD 0
+#define EST 1
+#define SUD 2
+#define OUEST 3
+void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine)
 {
-    if (direction_voulue == 0) 
-    {  
+    if (direction_voulue == NORD)
+    {
         // Nort
         *coord_x_voisine = coord_x_actu;
         *coord_y_voisine = coord_y_actu - 1;
-
-    } else if (direction_voulue == 1) 
-    {     
+    }
+    else if (direction_voulue == EST)
+    {
         // Est
         *coord_x_voisine = coord_x_actu + 1;
         *coord_y_voisine = coord_y_actu;
-
-    } else if (direction_voulue == 2) 
-    {    
-        // Sud       
+    }
+    else if (direction_voulue == SUD)
+    {
+        // Sud
         *coord_x_voisine = coord_x_actu;
         *coord_y_voisine = coord_y_actu + 1;
-
-    } else if (direction_voulue == 3) 
-    {    
+    }
+    else if (direction_voulue == OUEST)
+    {
         // Ouest
-        *coord_x_voisine= coord_x_actu - 1;
-        *coord_y_voisine= coord_y_actu;
-
-    } else 
+        *coord_x_voisine = coord_x_actu - 1;
+        *coord_y_voisine = coord_y_actu;
+    }
+    else
     {
         // Au cas ou, mauvaise détection
         *coord_x_voisine = coord_x_actu;
         *coord_y_voisine = coord_y_actu;
     }
-}  
-
-
-
-/**
- * Vérifie si un passage est physiquement possible entre (x,y) et (nx,ny)
- * en lisant directement dans les données brutes du labyrinthe.
- */
-bool est_passage_possible(t_laby *laby, int x, int y, int nx, int ny, int dir) {
-    if (nx < 0 || nx >= laby->sizeX || ny < 0 || ny >= laby->sizeY) {
-        return false;
-    }
-
-    int m_actu[4], item_actu;
-    int m_voisin[4], item_voisin;
-    int memo_murs_actu[4] = {0,0,0,0}; // Correction ici
-    int memo_murs_voisin[4] = {0,0,0,0};
-    
-    char *ptr = laby->labyData;
-    int offset = 0;
-    int compteur = 0;
-    int cible_actuelle = y * laby->sizeX + x;
-    int cible_voisine = ny * laby->sizeX + nx;
-    
-    while (sscanf(ptr, "%d %d %d %d %d%n", &m_actu[0], &m_actu[1], &m_actu[2], &m_actu[3], &item_actu, &offset) == 5) {
-        if (compteur == cible_actuelle) {
-            for(int i=0; i<4; i++) memo_murs_actu[i] = m_actu[i];
-        }
-        if (compteur == cible_voisine) {
-            for(int i=0; i<4; i++) memo_murs_voisin[i] = m_actu[i];
-        }
-        ptr += offset;
-        compteur++;
-        if (compteur > laby->sizeX * laby->sizeY) break;
-    }
-
-    int dir_opposee = (dir + 2) % 4;
-
-    // Si mur en sortie de la case actuelle
-    if (memo_murs_actu[dir] == 1) return false;
-    // Si mur en entrée de la case voisine
-    if (memo_murs_voisin[dir_opposee] == 1) return false;
-
-    return true;
 }
-int phaseExpansion(t_laby *laby, int coord_x_depart, int coord_y_depart, int coord_x_arrivee, int coord_y_arrivee)
+
+/*
+  Question 5 :
+
+  Si on cherche à utiliser la fonction `coord_case_voisine` pour une case
+  située sur le bord du tableau (coordonnées x=0, x=TAILLE_X-1, y=0, y=TAILLE_Y-1),
+  certaines directions pointeraient **horss du tableau** :
+
+  Cela provoquerait un accès mémoire invalide si on essayait de lire/écrire
+  dans le tableau avec ces coordonnées.
+
+  Pour se prémunir de ce problème, on considère que toutes les cases de la périphérie du labyrinthe sont bloquées,
+  et donc on n'appellera pas la fonction coord_case_voisine depuis une case
+  située sur la bordure.
+*/
+
+// Renvoie true ssi un chemin existe, false sinon
+// int phaseExpansion(int tab_representative_labyrinthe[TAILLE_X][TAILLE_Y], int coord_x_depart, int coord_y_depart, int coord_x_arrivee, int coord_y_arrivee)
+
+int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
 {
-    int TX = laby->sizeX;
-    int TY = laby->sizeY;
+    int distance_parcourue = 1; // distance initiale
+    int nouvelles_cases_marquees = 1;
+    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
+    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
 
-    // Création d'un tableau de travail dynamique à la taille du laby
-    int tab[TX][TY];
+    int tab_representative_labyrinthe[laby->sizeX][laby->sizeY];
 
-    // 1. Initialisation : tout à 0
-    for (int j = 0; j < TY; j++) {
-        for (int i = 0; i < TX; i++) {
-            tab[i][j] = 0;
-        }
-    }
+    tab_representative_labyrinthe[yek->x][yek->y] = distance_parcourue;
 
-    int distance = 1;
-    int nouvelles_cases = 1;
-    tab[coord_x_depart][coord_y_depart] = distance;
+    while (tab_representative_labyrinthe[coord_x_arrivee][coord_y_arrivee] == 0 && nouvelles_cases_marquees)
+    {
+        nouvelles_cases_marquees = 0;
 
-    // 2. Boucle d'expansion (Algorithme de Lee)
-    while (tab[coord_x_arrivee][coord_y_arrivee] == 0 && nouvelles_cases) {
-        nouvelles_cases = 0;
+        // Parcours de toutes les cases (ignore les bordures)
+        for (int y = 1; y < laby->sizeY - 1; y++)
+        {
+            for (int x = 1; x < laby->sizeX - 1; x++)
+            {
 
-        for (int y = 0; y < TY; y++) {
-            for (int x = 0; x < TX; x++) {
-                
-                // Si c'est une case marquée à la distance actuelle
-                if (tab[x][y] == distance) {
-                    
-                    // On regarde les 4 voisins
-                    for (int d = 0; d < 4; d++) {
+                if (tab_representative_labyrinthe[x][y] == distance_parcourue)
+                {
+                    // Vérifie les 4 voisins
+                    for (int d = 0; d < 4; d++)
+                    {
                         int nx, ny;
                         coord_case_voisine(x, y, d, &nx, &ny);
 
-                        // Vérification des limites du plateau
-                        if (nx >= 0 && nx < TX && ny >= 0 && ny < TY) {
-                            
-                            // Si la case n'est pas encore visitée
-                            if (tab[nx][ny] == 0) {
-                                
-                                // /!\ C'est ici qu'on doit vérifier les MURS /!\
-                                // Pour l'instant on vérifie juste que c'est possible
-                                if (est_passage_possible(laby, x, y, nx, ny, d)) {
-                                    tab[nx][ny] = distance + 1;
-                                    nouvelles_cases = 1;
-                                }
-                            }
+                        if (tab_representative_labyrinthe[nx][ny] == 0)
+                        { // case libre non visitée
+                            tab_representative_labyrinthe[nx][ny] = distance_parcourue + 1;
+                            nouvelles_cases_marquees = 1;
                         }
                     }
                 }
             }
         }
-        distance++;
-        
-        // Sécurité pour éviter les boucles infinies
-        if (distance > TX * TY) break;
+
+        distance_parcourue++;
     }
 
-    // Renvoie 1 (true) si une distance a été inscrite à l'arrivée
-    return (tab[coord_x_arrivee][coord_y_arrivee] > 0);
+    // Renvoie true si l'arrivée a été atteinte, false sinon
+    return tab_representative_labyrinthe[coord_x_arrivee][coord_y_arrivee] > 0;
 }
 
-int phaseRemontee(int TX, int TY, int tab[TX][TY], int x_arr, int y_arr, t_coord *chemin) {
-    int x = x_arr;
-    int y = y_arr;
-    int d = tab[x][y];
-    int index = 0;
+// Renvoie true si le chemin a été correctement remonté, false sinon
+// int phaseRemontee(int lab[TAILLE_X][TAILLE_Y], int coord_x_depart, int coord_y_depart, int coord_x_arrivee, int coord_y_arrivee)
 
-    while (d > 1) {
-        chemin[index].x = x;
-        chemin[index].y = y;
-        index++;
+int phaseRemontee(t_laby *laby, t_tuiles *tuiles_tresor, t_joueur *yek)
+{
+    int coord_x_depart = yek->x;
+    int coord_y_depart = yek->y;
+    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
+    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
 
-        // On cherche le voisin qui a la distance d-1
-        for (int i = 0; i < 4; i++) {
+    int lab[laby->sizeX][laby->sizeY];
+    int x_courant = coord_x_arrivee;
+    int y_courant = coord_y_arrivee;
+    int distance_actuelle = lab[x_courant][y_courant];
+
+    if (distance_actuelle <= 0)
+    {
+        // L'arrivée n'a pas été atteinte pendant l'expansion
+        return false;
+    }
+
+    // Marque la case d'arrivée comme faisant partie du chemin
+    lab[x_courant][y_courant] = tuiles_tresor->num_tresor;
+
+    while (!(x_courant == coord_x_depart && y_courant == coord_y_depart))
+    {
+        bool voisin_trouve = false;
+
+        // Vérifie les 4 voisins
+        for (int d = 0; d < 4; d++)
+        {
             int nx, ny;
-            coord_case_voisine(x, y, i, &nx, &ny);
-            
-            if (nx >= 0 && nx < TX && ny >= 0 && ny < TY) {
-                if (tab[nx][ny] == d - 1) {
-                    // ATTENTION : Vérifie aussi s'il n'y a pas de mur entre (x,y) et (nx,ny)
-                    // car deux cases peuvent être distantes de d et d-1 sans être reliées !
-                    if (est_passage_possible(&laby, x, y, nx, ny, i)) {
-                        x = nx;
-                        y = ny;
-                        d--;
-                        break;
-                    }
-                }
+            coord_case_voisine(x_courant, y_courant, d, &nx, &ny);
+
+            // Si voisin a la distance précédente
+            if (lab[nx][ny] == distance_actuelle - 1)
+            {
+                // Marque le voisin comme faisant partie du chemin
+                lab[nx][ny] = -2;
+
+                // Déplace la case courante
+                x_courant = nx;
+                y_courant = ny;
+                distance_actuelle--;
+                voisin_trouve = true;
+                break;
             }
         }
+
+        if (!voisin_trouve)
+        {
+            // Si aucun voisin à distance r-1 n'a été trouvé, la remontée échoue
+            return false;
+        }
     }
-    // Ajouter la case de départ (distance 1)
-    chemin[index].x = x;
-    chemin[index].y = y;
-    return index + 1; // Retourne la taille du chemin
+
+    return true;
 }

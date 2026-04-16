@@ -1,11 +1,17 @@
 #include "Variable.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include "clientAPI.h"
 #include "labyrinthAPI.h"
 #include "affichage.h"
 #include "Mouvement.h"
+
+void update_laby(t_laby *laby, t_joueur *adversaire){
+    
+}
+
 int main()
 {
     printf("caca\n");
@@ -27,6 +33,7 @@ int main()
     taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
     laby.labyData = malloc(taille_buffer * sizeof(char));
     laby.tour_joueur = getLabyrinth(laby.labyData);
+    transfer_labydata_to_laby_update(&laby, true);
 
 #if DEBUG_DATA_STRUCT_LABY
     printf("Données recu du serveur, mon numéro du joueur : %d\n", laby.tour_joueur);
@@ -48,36 +55,10 @@ int main()
     {
         printf("\nAffichage du labyrinthe :\n");
         printLabyrinth();
-
         // afficheLabyrinthe(laby.labyData, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
         position_tresor(&laby, &tuiles_tresor);
-        int tab_representative_labyrinthe[laby.sizeX][laby.sizeY];
 
-        int coord_x_depart = yek.x;
-        int coord_y_depart = yek.y;
-
-        int num_tresor_voulu = 1;
-        int coord_x_arrivee = tuiles_tresor.x[num_tresor_voulu];
-        int coord_y_arrivee = tuiles_tresor.y[num_tresor_voulu];
-
-        int couple_cordonne_depart[2] = {coord_x_depart, coord_y_depart};
-        int couple_cordonne_arrivee[2] = {coord_x_arrivee, coord_y_arrivee};
-        t_coord tab_expansion[500];
-        int taille_chemin = 0;
-
-        // Phase d'expansion
-        bool chemin_existe = phaseExpansion(&laby, coord_x_depart, coord_y_depart, coord_x_arrivee, coord_y_arrivee);
-        t_coord chemin_a_dessiner;
-        if (chemin_existe)
-        {
-            printf("Chemin trouvé !!! B)\n");
-            taille_chemin = phaseRemontee(laby.sizeX, laby.sizeY, tab_expansion, coord_x_arrivee, coord_y_arrivee, &chemin_a_dessiner);
-        }
-        else
-        {
-            printf("Pas de chemin possible entre départ et arrivée\n");
-        }
-        afficheLabyrinthe(laby.labyData, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y,&chemin_a_dessiner, taille_chemin);
+        // afficheLabyrinthe(laby.labyData, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y,&chemin_a_dessiner, taille_chemin);
 
         if (laby.tour_joueur == 0)
         {

@@ -9,11 +9,14 @@
 
 #ifndef Strategie_H
 #define Strategie_H
-
+//Fonctionne
 void position_tresor(t_laby *laby, t_tuiles *tuiles);
-int phaseExpansion(t_laby *laby, int coord_x_depart, int coord_y_depart, int coord_x_arrivee, int coord_y_arrivee);
-bool est_passage_possible(t_laby *laby, int x, int y, int nx, int ny, int dir);
- void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine);
-int phaseRemontee(int TX, int TY, int tab[TX][TY], int x_arr, int y_arr, t_coord *chemin);
+void transfer_labydata_to_laby_update(t_laby *laby, bool activate_print);
+
+
+// A tester
+int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor);
+void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine);
+int phaseRemontee(t_laby *laby, t_tuiles *tuiles_tresor, t_joueur *yek);
 
 #endif
