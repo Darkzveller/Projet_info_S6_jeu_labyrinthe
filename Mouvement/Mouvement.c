@@ -36,7 +36,34 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
     }
 #endif
 }
+void print_laby(t_laby *laby)
+{
+    printf("Laby data que j'obtiens\n");
 
+    for (int y = 0; y < laby->sizeY; y++)
+    {
+        for (int x = 0; x < laby->sizeX; x++)
+        {
+
+            // int v = laby->laby_update[x][y];
+            int nord = (laby->laby_update[x][y] >> SHIFT_BIT_NORD) & 1;
+            int est = (laby->laby_update[x][y] >> SHIFT_BIT_EST) & 1;
+            int sud = (laby->laby_update[x][y] >> SHIFT_BIT_SUD) & 1;
+            int ouest = (laby->laby_update[x][y] >> SHIFT_BIT_OUEST) & 1;
+
+            int item = (laby->laby_update[x][y] >> 0) & 0xFF;
+            if ((x == (laby->sizeX) - 1) && (y == (laby->sizeY - 1)))
+            {
+                printf("\nLa tuile supplementaire est celle ci : %d%d%d%d %d ", nord, est, sud, ouest, item);
+            }
+            else
+            {
+                printf("%d%d%d%d%d ", nord, est, sud, ouest, item);
+            }
+        }
+        printf("\n");
+    }
+}
 void transfer_labydata_to_laby_update(t_laby *laby, bool activate_print)
 {
     char *ptr = laby->labyData;
@@ -84,32 +111,7 @@ void transfer_labydata_to_laby_update(t_laby *laby, bool activate_print)
     }
     if (activate_print == true)
     {
-        printf("Laby data que j'obtiens\n");
-
-        for (int y = 0; y < laby->sizeY; y++)
-        {
-            for (int x = 0; x < laby->sizeX; x++)
-            {
-
-                // int v = laby->laby_update[x][y];
-                int nord = (laby->laby_update[x][y] >> SHIFT_BIT_NORD) & 1;
-                int est = (laby->laby_update[x][y] >> SHIFT_BIT_EST) & 1;
-                int sud = (laby->laby_update[x][y] >> SHIFT_BIT_SUD) & 1;
-                int ouest = (laby->laby_update[x][y] >> SHIFT_BIT_OUEST) & 1;
-
-                int item = (laby->laby_update[x][y] >> 0) & 0xFF;
-                if ((x == (laby->sizeX)-1) && (y == (laby->sizeY-1)))
-                {
-                printf("\nLa tuile supplementaire est celle ci : %d%d%d%d %d ", nord, est, sud, ouest, item);
-
-                }
-                else
-                {
-                    printf("%d%d%d%d %d ", nord, est, sud, ouest, item);
-                }
-            }
-            printf("\n");
-        }
+        print_laby(&laby);
     }
 }
 

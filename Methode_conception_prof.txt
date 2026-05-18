@@ -1,0 +1,112 @@
+- stocker une partie : labyrinthe; qui joue; piece supplémentaire, taille
+
+- stocker un coup
+
+- tuile : Nord,est,sud,ouest ; num tresor 0 si pas de trésor ; position ? mais barré par le prof
+
+#fonction qui créer le labyriinthe initial
+#fonction qui joue un coup : met à jour la partie
+#fonction qui doit trouver un bon coup
+#fonction qui affiche le labyrinthe
+
+
+
+typedef struct{
+
+int sizeX, sizeY;
+t_title laby[21][13]
+int whoplays; /*0 if we play*/
+t_tile extratuile;
+t_player players[2];
+t_move lastMove;
+
+}t_game;
+
+
+typedef struct{
+
+bool nord,est,sud,ouest;
+uint8_t item; /*0 si pas de item*/
+
+
+
+}t_tuiles;
+
+typedef struct{
+
+int x,y;
+int cible ou target; /* prochain tour*/
+int incr; /*in to-1 or +1*/
+}
+
+typedef enum{
+INSERT_LINE_LEFT =0;
+INSERT_LINE_RIGHT=1;
+INSERT_COLUM_TOP =2;
+INSERT_COLUM_BOT =3;
+}t_insertion;
+
+typedef struct {
+t_insertion type;
+int numbre; /*Numéro ligne ou de colonne*/
+int rotation;
+t_pos moves[11];
+int nbmoves;
+}t_move
+
+typedef struct{
+int x,y;
+
+} t_pos;
+
+
+
+fonction mettant a jour la partie : 
+faire tourner la tuile
+deplacer les tuiles
+Metttre a jour la nouvelle tuile
+mettre a jour les indeces des térsors du jeux
+deplacer si besoin les joueurs
+mettre a jour prohain tour
+
+updateGame(t_game* game, const t_move* move){
+
+//rotation tuile de la tuile extra
+
+rotateTuile(&game->extraTuil);
+
+// Insertion tab deux dimension
+
+if(move->type == INSERT_LINE_LEFT){
+t_tuile extra = game->laby [game->sizeX-1][game->sizeY-1]
+
+for(int i = game->sizeX-2; i>=0; i--){
+game->laby[i+1][move->nombre] = game->laby[i][move->nombre];
+game->laby[0][move->nombre]=game->extratuile;
+game-extraTuiles = extra
+}
+//move player
+for(int i =0; i<2;i++){
+if game->player[i].pos.y == move->nombre){
+game->player[i].pos.y = i++;
+if game->player[i].pos.y == game->sizeX){
+game->player[i].pos.y =0;}
+}
+}
+else le reste
+
+// move the player who plays
+
+for(int i=0; i<move->nbMove;i+){
+game->player[game->whoplays].pos = move->pos[i];
+if(move->pos[i].item == game->players[game->whoplays].cible){}
+game->[game->whoplays].target += incr[game->whoplays];
+}
+
+
+}
+
+
+
+
+

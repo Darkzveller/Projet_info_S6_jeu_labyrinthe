@@ -50,7 +50,6 @@ unsigned int alloueCouleur(int red, int green, int blue)
     XAllocColor(display, cmap, &coul);
     return coul.pixel;
 }
-
 /* Fonction 'initAffichage' */
 int initAffichage(int TAILLE_X, int TAILLE_Y)
 {
@@ -94,158 +93,110 @@ int initAffichage(int TAILLE_X, int TAILLE_Y)
     return 1;
 }
 
-/* Fonction afficheLabyrinthe avec numérotation des lignes et colonnes */
-int afficheLabyrinthe(char *labyData, int tempo, int TAILLE_X, int TAILLE_Y,
-                      int x1, int y1, int x2, int y2,t_coord *chemin, int taille_chemin)
-{
-#if ACTIVE_AFFICHAGE_LABY
 
-    int fin_attente = 0;
-    int x, y, n, e, s, o, item;
-    char *ptr = labyData;
-    int offset;
-    char str_num[4]; /* Buffer pour convertir les nombres en texte */
+// /* Fonction afficheLabyrinthe avec numérotation des lignes et colonnes */
+// int afficheLabyrinthe(char *labyData, int tempo, int TAILLE_X, int TAILLE_Y,
+//                       int x1, int y1, int x2, int y2)
+// {
+//     int fin_attente = 0;
+//     int x, y, n, e, s, o, item;
+//     char *ptr = labyData;
+//     int offset;
+//     char str_num[4]; /* Buffer pour convertir les nombres en texte */
 
-    if (down)
-        return 1;
-    if (!init)
-    {
-        fprintf(stderr, "Warning (afficheLabyrinthe) : initAffichage n'a pas encore été exécuté\n");
-        return 0;
-    }
+//     if (down)
+//         return 1;
+//     if (!init)
+//     {
+//         fprintf(stderr, "Warning (afficheLabyrinthe) : initAffichage n'a pas encore été exécuté\n");
+//         return 0;
+//     }
 
-    /* 1. Effacer le fond */
-    XSetForeground(display, gc, couleurs[BLANC]);
-    XFillRectangle(display, pix, gc, 0, 0, (TAILLE_X + 2) * CASE, (TAILLE_Y + 2) * CASE);
+//     /* 1. Effacer le fond */
+//     XSetForeground(display, gc, couleurs[BLANC]);
+//     XFillRectangle(display, pix, gc, 0, 0, (TAILLE_X + 2) * CASE, (TAILLE_Y + 2) * CASE);
 
-    /* 2. DESSIN DES NUMÉROS DE LIGNES ET COLONNES */
-    XSetForeground(display, gc, couleurs[NOIR]);
+//     /* 2. DESSIN DES NUMÉROS DE LIGNES ET COLONNES */
+//     XSetForeground(display, gc, couleurs[NOIR]);
 
-    // Numéros des Colonnes (en haut)
-    for (x = 0; x < TAILLE_X; x++)
-    {
-        sprintf(str_num, "%d", x);
-        // On centre le texte au dessus de la colonne correspondante
-        XDrawString(display, pix, gc, (x + 1) * CASE + (CASE / 2) - 4, (CASE / 2) + 5, str_num, strlen(str_num));
-    }
+//     // Numéros des Colonnes (en haut)
+//     for (x = 0; x < TAILLE_X; x++) {
+//         sprintf(str_num, "%d", x);
+//         // On centre le texte au dessus de la colonne correspondante
+//         XDrawString(display, pix, gc, (x + 1) * CASE + (CASE / 2) - 4, (CASE / 2) + 5, str_num, strlen(str_num));
+//     }
 
-    // Numéros des Lignes (à gauche)
-    for (y = 0; y < TAILLE_Y; y++)
-    {
-        sprintf(str_num, "%d", y);
-        // On place le texte à gauche de la ligne correspondante
-        XDrawString(display, pix, gc, (CASE / 2) - 5, (y + 1) * CASE + (CASE / 2) + 5, str_num, strlen(str_num));
-    }
+//     // Numéros des Lignes (à gauche)
+//     for (y = 0; y < TAILLE_Y; y++) {
+//         sprintf(str_num, "%d", y);
+//         // On place le texte à gauche de la ligne correspondante
+//         XDrawString(display, pix, gc, (CASE / 2) - 5, (y + 1) * CASE + (CASE / 2) + 5, str_num, strlen(str_num));
+//     }
 
-    /* 3. DESSIN DU QUADRILLAGE POINTILLÉ */
-    unsigned int coulGrille = alloueCouleur(40000, 40000, 40000);
-    XSetForeground(display, gc, coulGrille);
-    XSetLineAttributes(display, gc, 1, LineOnOffDash, CapButt, JoinMiter);
+//     /* 3. DESSIN DU QUADRILLAGE POINTILLÉ */
+//     unsigned int coulGrille = alloueCouleur(40000, 40000, 40000);
+//     XSetForeground(display, gc, coulGrille);
+//     XSetLineAttributes(display, gc, 1, LineOnOffDash, CapButt, JoinMiter);
 
-    for (x = 1; x <= TAILLE_X + 1; x++)
-        XDrawLine(display, pix, gc, x * CASE, CASE, x * CASE, (TAILLE_Y + 1) * CASE);
-    for (y = 1; y <= TAILLE_Y + 1; y++)
-        XDrawLine(display, pix, gc, CASE, y * CASE, (TAILLE_X + 1) * CASE, y * CASE);
+//     for (x = 1; x <= TAILLE_X + 1; x++)
+//         XDrawLine(display, pix, gc, x * CASE, CASE, x * CASE, (TAILLE_Y + 1) * CASE);
+//     for (y = 1; y <= TAILLE_Y + 1; y++)
+//         XDrawLine(display, pix, gc, CASE, y * CASE, (TAILLE_X + 1) * CASE, y * CASE);
 
-    XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
+//     XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
 
-    /* 4. DESSIN DES TUILES ET MURS */
-    for (y = 0; y < TAILLE_Y; y++)
-    {
-        for (x = 0; x < TAILLE_X; x++)
-        {
-            if (sscanf(ptr, "%d %d %d %d %d%n", &n, &e, &s, &o, &item, &offset) >= 5)
-            {
-                int px = (x + 1) * CASE;
-                int py = (y + 1) * CASE;
+//     /* 4. DESSIN DES TUILES ET MURS */
+//     for (y = 0; y < TAILLE_Y; y++)
+//     {
+//         for (x = 0; x < TAILLE_X; x++)
+//         {
+//             if (sscanf(ptr, "%d %d %d %d %d%n", &n, &e, &s, &o, &item, &offset) >= 5)
+//             {
+//                 int px = (x + 1) * CASE;
+//                 int py = (y + 1) * CASE;
 
-                if (item > 0)
-                {
-                    XSetForeground(display, gc, couleurs[JAUNE]);
-                    XFillRectangle(display, pix, gc, px + 1, py + 1, CASE - 1, CASE - 1);
-                }
+//                 if (item > 0) {
+//                     XSetForeground(display, gc, couleurs[JAUNE]);
+//                     XFillRectangle(display, pix, gc, px + 1, py + 1, CASE - 1, CASE - 1);
+//                 }
 
-                XSetForeground(display, gc, couleurs[NOIR]);
-                if (n)
-                    XFillRectangle(display, pix, gc, px, py, CASE, 8);
-                if (s)
-                    XFillRectangle(display, pix, gc, px, py + CASE - 8, CASE, 8);
-                if (o)
-                    XFillRectangle(display, pix, gc, px, py, 8, CASE);
-                if (e)
-                    XFillRectangle(display, pix, gc, px + CASE - 8, py, 8, CASE);
+//                 XSetForeground(display, gc, couleurs[NOIR]);
+//                 if (n) XFillRectangle(display, pix, gc, px, py, CASE, 8);
+//                 if (s) XFillRectangle(display, pix, gc, px, py + CASE - 8, CASE, 8);
+//                 if (o) XFillRectangle(display, pix, gc, px, py, 8, CASE);
+//                 if (e) XFillRectangle(display, pix, gc, px + CASE - 8, py, 8, CASE);
 
-                if (item > 0)
-                {
-                    sprintf(str_num, "%d", item);
-                    XDrawString(display, pix, gc, px + CASE / 2 - 4, py + CASE / 2 + 4, str_num, strlen(str_num));
-                }
-                ptr += offset;
-            }
-        }
-    }
-if (chemin != NULL && taille_chemin > 1) {
-        
-        // 1. On choisit la couleur BLEUE
-        XSetForeground(display, gc, couleurs[BLEU]); 
-        
-        // 2. On configure un trait épais (épaisseur 4) et arrondi pour faire propre
-        XSetLineAttributes(display, gc, 4, LineSolid, CapRound, JoinRound);
+//                 if (item > 0) {
+//                     sprintf(str_num, "%d", item);
+//                     XDrawString(display, pix, gc, px + CASE / 2 - 4, py + CASE / 2 + 4, str_num, strlen(str_num));
+//                 }
+//                 ptr += offset;
+//             }
+//         }
+//     }
 
-        // 3. Boucle pour tracer chaque segment entre la case 'i' et 'i+1'
-        for (int i = 0; i < taille_chemin - 1; i++) {
-            
-            // Calcul du centre de la case A (chemin[i])
-            // (+1 car on a une marge d'une case autour du laby)
-            int xa = (chemin[i].x + 1) * CASE + (CASE / 2);
-            int ya = (chemin[i].y + 1) * CASE + (CASE / 2);
-            
-            // Calcul du centre de la case B (chemin[i+1])
-            int xb = (chemin[i+1].x + 1) * CASE + (CASE / 2);
-            int yb = (chemin[i+1].y + 1) * CASE + (CASE / 2);
+//     /* 5. DESSIN DES PIONS */
+//     XSetForeground(display, gc, couleurs[ROUGE]);
+//     XFillArc(display, pix, gc, (x1 + 1) * CASE + 15, (y1 + 1) * CASE + 15, 30, 30, 0, 360 * 64);
+//     XSetForeground(display, gc, couleurs[VERT]);
+//     XFillArc(display, pix, gc, (x2 + 1) * CASE + 15, (y2 + 1) * CASE + 15, 30, 30, 0, 360 * 64);
 
-            // On trace la ligne entre les deux centres
-            XDrawLine(display, pix, gc, xa, ya, xb, yb);
-        }
-        
-        // 4. IMPORTANT : Remettre l'épaisseur par défaut à 1 pour ne pas 
-        // déformer le dessin des pions qui suit.
-        XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
-    }
-    
-    
-    /* 5. DESSIN DES PIONS */
-    XSetForeground(display, gc, couleurs[ROUGE]);
-    XFillArc(display, pix, gc, (x1 + 1) * CASE + 15, (y1 + 1) * CASE + 15, 30, 30, 0, 360 * 64);
-    XSetForeground(display, gc, couleurs[BLEU]);
-    XFillArc(display, pix, gc, (x2 + 1) * CASE + 15, (y2 + 1) * CASE + 15, 30, 30, 0, 360 * 64);
+//     /* 6. ENVOI FINAL */
+//     XCopyArea(display, pix, w, gc, 0, 0, (TAILLE_X + 2) * CASE, (TAILLE_Y + 2) * CASE, 0, 0);
+//     XFlush(display);
 
-    /* 6. ENVOI FINAL */
-    XCopyArea(display, pix, w, gc, 0, 0, (TAILLE_X + 2) * CASE, (TAILLE_Y + 2) * CASE, 0, 0);
-    XFlush(display);
-
-    /* --- Gestion des évènements (Identique) --- */
-    clock_t debut_time = clock();
-    while (!fin_attente)
-    {
-        if (XPending(display))
-        {
-            XEvent ev;
-            XNextEvent(display, &ev);
-            if (ev.type == Expose)
-                XCopyArea(display, pix, w, gc, 0, 0, (TAILLE_X + 2) * CASE, (TAILLE_Y + 2) * CASE, 0, 0);
-            if (ev.type == KeyPress && XLookupKeysym(&ev.xkey, 0) == XK_space)
-                fin_attente = 2;
-            if (ev.type == ClientMessage && ev.xclient.data.l[0] == wmDeleteMessage)
-                exit(0);
-        }
-        if (tempo && ((clock() - debut_time) * 1000 / CLOCKS_PER_SEC) > tempo)
-            fin_attente = 1;
-        if (!tempo && fin_attente == 0)
-            usleep(10000);
-        if (tempo == 0 && fin_attente == 2)
-            break;
-    }
-    return (fin_attente == 2);
-#endif
-}
+//     /* --- Gestion des évènements (Identique) --- */
+//     clock_t debut_time = clock();
+//     while (!fin_attente) {
+//         if (XPending(display)) {
+//             XEvent ev; XNextEvent(display, &ev);
+//             if (ev.type == Expose) XCopyArea(display, pix, w, gc, 0, 0, (TAILLE_X + 2) * CASE, (TAILLE_Y + 2) * CASE, 0, 0);
+//             if (ev.type == KeyPress && XLookupKeysym(&ev.xkey, 0) == XK_space) fin_attente = 2;
+//             if (ev.type == ClientMessage && ev.xclient.data.l[0] == wmDeleteMessage) exit(0);
+//         }
+//         if (tempo && ((clock() - debut_time) * 1000 / CLOCKS_PER_SEC) > tempo) fin_attente = 1;
+//         if (!tempo && fin_attente == 0) usleep(10000);
+//         if (tempo == 0 && fin_attente == 2) break;
+//     }
+//     return (fin_attente == 2);
+// }
