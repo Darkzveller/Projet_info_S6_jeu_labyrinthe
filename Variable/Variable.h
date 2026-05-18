@@ -24,6 +24,16 @@ extern char *nom_bot_moi;
 #define BOT_BASIC 2
 extern char *type_partie_choisi[4];
 
+
+#define INSERT_LIGNE_GAUCHE 0
+#define INSERT_LIGNE_DROITE INSERT_LIGNE_GAUCHE + 1
+#define INSERT_COLONNE_HAUT INSERT_LIGNE_DROITE + 1
+#define INSERT_COLONNE_BAS INSERT_COLONNE_HAUT + 1
+
+#define ROTATION_TUILE 0
+#define INSERTION_A_EFFECTUER 1
+
+
 /*
  On utilise 16 bits au total :
  - 4 bits pour les murs (Nord, Est, Sud, Ouest)

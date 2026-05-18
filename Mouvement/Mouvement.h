@@ -13,6 +13,7 @@
 void position_tresor(t_laby *laby, t_tuiles *tuiles);
 void transfer_labydata_to_laby_update(t_laby *laby);
 void print_laby(t_laby *laby, bool activate);
+void update_laby(t_laby *laby, t_joueur *adversaire);
 
 // A tester
 int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor);

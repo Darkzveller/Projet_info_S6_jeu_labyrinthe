@@ -129,6 +129,128 @@ void transfer_labydata_to_laby_update(t_laby *laby)
     }
 }
 
+
+void update_laby(t_laby *laby, t_joueur *adversaire)
+{
+    int var_temp = 0;
+    if (adversaire->rotation != 0)
+    {
+        int nord = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_NORD) & 1;
+        int est = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_EST) & 1;
+        int sud = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_SUD) & 1;
+        int ouest = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_OUEST) & 1;
+        int item = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> 0) & 0xFF;
+
+        for (int i = 0; i <= adversaire->rotation; i++)
+        {
+            int nord_old = nord;
+            int est_old = est;
+            int sud_old = sud;
+            int ouest_old = ouest;
+
+            nord = ouest_old;
+            est = nord_old;
+            sud = est_old;
+            ouest = sud_old;
+        }
+        laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] =
+            (nord << SHIFT_BIT_NORD) |
+            (est << SHIFT_BIT_EST) |
+            (sud << SHIFT_BIT_SUD) |
+            (ouest << SHIFT_BIT_OUEST) |
+            (item);
+    }
+
+    if (adversaire->type_insertion == INSERT_LIGNE_DROITE)
+    {
+
+        int y = adversaire->indice;
+
+        // sauvegarde de la tuile expulsée
+        int temp = laby->laby_update[y][0];
+
+        // décalage gauche -> droite
+        for (int x = 0; x < laby->sizeX - 1; x++)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y][x + 1];
+        }
+
+        // insertion de la tuile externe
+        laby->laby_update[y][laby->sizeX - 1] =
+            laby->extra.presence_mur;
+
+        // la tuile expulsée devient la nouvelle tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_LIGNE_GAUCHE)
+    {
+        int y = adversaire->indice;
+
+        // sauvegarde tuile expulsée
+        int temp = laby->laby_update[y][laby->sizeX - 1];
+
+        // décalage droite -> gauche
+        for (int x = laby->sizeX - 1; x > 0; x--)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y][x - 1];
+        }
+
+        // insertion de la tuile externe
+        laby->laby_update[y][0] =
+            laby->extra.presence_mur;
+
+        // mise à jour de la tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_COLONNE_HAUT)
+    {
+        int x = adversaire->indice;
+
+        // sauvegarde de la tuile expulsée (en bas)
+        int temp = laby->laby_update[laby->sizeY - 1][x];
+
+        // décalage bas <- haut
+        for (int y = laby->sizeY - 1; y > 0; y--)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y - 1][x];
+        }
+
+        // insertion de la tuile externe en haut
+        laby->laby_update[0][x] =
+            laby->extra.presence_mur;
+
+        // la tuile expulsée devient la nouvelle tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_COLONNE_BAS)
+    {
+        int x = adversaire->indice;
+
+        // sauvegarde de la tuile expulsée (en haut)
+        int temp = laby->laby_update[0][x];
+
+        // décalage haut <- bas
+        for (int y = 0; y < laby->sizeY - 1; y++)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y + 1][x];
+        }
+
+        // insertion de la tuile externe en bas
+        laby->laby_update[laby->sizeY - 1][x] =
+            laby->extra.presence_mur;
+
+        // mise à jour de la tuile externe
+        laby->extra.presence_mur = temp;
+    }
+
+}
+
+
+
 // Renvoie les coordonnées de la case voisine à partir d'une case (x, y) et d'une direction d
 // d = 0 : Nord, 1 : Est, 2 : Sud, 3 : Ouest
 //  void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine)
