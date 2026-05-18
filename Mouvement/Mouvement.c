@@ -36,8 +36,11 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
     }
 #endif
 }
-void print_laby(t_laby *laby)
+void print_laby(t_laby *laby, bool activate)
 {
+    if(!activate){
+        return;
+    }
     printf("Laby data que j'obtiens\n");
 
     for (int y = 0; y < laby->sizeY; y++)
@@ -50,11 +53,18 @@ void print_laby(t_laby *laby)
             int est = (laby->laby_update[x][y] >> SHIFT_BIT_EST) & 1;
             int sud = (laby->laby_update[x][y] >> SHIFT_BIT_SUD) & 1;
             int ouest = (laby->laby_update[x][y] >> SHIFT_BIT_OUEST) & 1;
-
             int item = (laby->laby_update[x][y] >> 0) & 0xFF;
+
             if ((x == (laby->sizeX) - 1) && (y == (laby->sizeY - 1)))
             {
-                printf("\nLa tuile supplementaire est celle ci : %d%d%d%d %d ", nord, est, sud, ouest, item);
+                // printf("\nLa tuile supplementaire est celle ci : %d%d%d%d %d ", nord, est, sud, ouest, item);
+                int nord_extra = (laby->extra.presence_mur >> SHIFT_BIT_NORD) & 1;
+                int est_extra = (laby->extra.presence_mur >> SHIFT_BIT_EST) & 1;
+                int sud_extra = (laby->extra.presence_mur >> SHIFT_BIT_SUD) & 1;
+                int ouest_extra = (laby->extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
+                int item_extra = (laby->extra.presence_mur >> 0) & 0xFF;
+
+                printf("\nLa tuile supplementaire est celle ci : %d%d%d%d %d ", nord_extra, est_extra, sud_extra, ouest_extra, item_extra);
             }
             else
             {
@@ -64,7 +74,7 @@ void print_laby(t_laby *laby)
         printf("\n");
     }
 }
-void transfer_labydata_to_laby_update(t_laby *laby, bool activate_print)
+void transfer_labydata_to_laby_update(t_laby *laby)
 {
     char *ptr = laby->labyData;
     int nord = 0;
@@ -107,11 +117,15 @@ void transfer_labydata_to_laby_update(t_laby *laby, bool activate_print)
                     (item);
                 ptr += offset;
             }
+            if ((x == (laby->sizeX) - 1) && (y == (laby->sizeY - 1)))
+            {
+                laby->extra.presence_mur = (nord << SHIFT_BIT_NORD) |
+                                           (est << SHIFT_BIT_EST) |
+                                           (sud << SHIFT_BIT_SUD) |
+                                           (ouest << SHIFT_BIT_OUEST) |
+                                           (item);
+            }
         }
-    }
-    if (activate_print == true)
-    {
-        print_laby(&laby);
     }
 }
 

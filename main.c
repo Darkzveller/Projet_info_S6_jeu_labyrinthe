@@ -9,8 +9,8 @@
 #include "Mouvement.h"
 #define INSERT_LIGNE_GAUCHE 0
 #define INSERT_LIGNE_DROITE INSERT_LIGNE_GAUCHE + 1
-#define INSERT_COLONNE_GAUCHE INSERT_LIGNE_DROITE + 1
-#define INSERT_COLONNE_DROITE INSERT_COLONNE_GAUCHE + 1
+#define INSERT_COLONNE_HAUT INSERT_LIGNE_DROITE + 1
+#define INSERT_COLONNE_BAS INSERT_COLONNE_HAUT + 1
 
 #define ROTATION_TUILE 0
 #define INSERTION_A_EFFECTUER 1
@@ -46,6 +46,93 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
             (item);
     }
 
+    if (adversaire->type_insertion == INSERT_LIGNE_DROITE)
+    {
+
+        int y = adversaire->indice;
+
+        // sauvegarde de la tuile expulsée
+        int temp = laby->laby_update[y][0];
+
+        // décalage gauche -> droite
+        for (int x = 0; x < laby->sizeX - 1; x++)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y][x + 1];
+        }
+
+        // insertion de la tuile externe
+        laby->laby_update[y][laby->sizeX - 1] =
+            laby->extra.presence_mur;
+
+        // la tuile expulsée devient la nouvelle tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_LIGNE_GAUCHE)
+    {
+        int y = adversaire->indice;
+
+        // sauvegarde tuile expulsée
+        int temp = laby->laby_update[y][laby->sizeX - 1];
+
+        // décalage droite -> gauche
+        for (int x = laby->sizeX - 1; x > 0; x--)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y][x - 1];
+        }
+
+        // insertion de la tuile externe
+        laby->laby_update[y][0] =
+            laby->extra.presence_mur;
+
+        // mise à jour de la tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_COLONNE_HAUT)
+    {
+        int x = adversaire->indice;
+
+        // sauvegarde de la tuile expulsée (en bas)
+        int temp = laby->laby_update[laby->sizeY - 1][x];
+
+        // décalage bas <- haut
+        for (int y = laby->sizeY - 1; y > 0; y--)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y - 1][x];
+        }
+
+        // insertion de la tuile externe en haut
+        laby->laby_update[0][x] =
+            laby->extra.presence_mur;
+
+        // la tuile expulsée devient la nouvelle tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_COLONNE_BAS)
+    {
+        int x = adversaire->indice;
+
+        // sauvegarde de la tuile expulsée (en haut)
+        int temp = laby->laby_update[0][x];
+
+        // décalage haut <- bas
+        for (int y = 0; y < laby->sizeY - 1; y++)
+        {
+            laby->laby_update[y][x] =
+                laby->laby_update[y + 1][x];
+        }
+
+        // insertion de la tuile externe en bas
+        laby->laby_update[laby->sizeY - 1][x] =
+            laby->extra.presence_mur;
+
+        // mise à jour de la tuile externe
+        laby->extra.presence_mur = temp;
+    }
+
+    /*
     if (adversaire->type_insertion == INSERT_LIGNE_GAUCHE)
     {
         int y = adversaire->indice;
@@ -112,7 +199,7 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
 
         // insertion en bas
         laby->laby_update[laby->sizeY - 1][x] = temp;
-    }
+    }*/
     /*
         if (adversaire->type_insertion == INSERT_LIGNE_GAUCHE)
         {
@@ -201,8 +288,10 @@ int main()
     taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
     laby.labyData = malloc(taille_buffer * sizeof(char));
     laby.tour_joueur = getLabyrinth(laby.labyData);
-    transfer_labydata_to_laby_update(&laby, true);
-    print_laby(&laby);
+    transfer_labydata_to_laby_update(&laby);
+    print_laby(&laby, true);
+    // while (1)
+    //     ;
 
 #if DEBUG_DATA_STRUCT_LABY
     printf("Données recu du serveur, mon numéro du joueur : %d\n", laby.tour_joueur);
@@ -232,7 +321,7 @@ int main()
 
         if (laby.tour_joueur == 0)
         {
-                                update_laby(&laby, &yek);
+            update_laby(&laby, &yek);
 
             printf("Entre coup chef : ");
             scanf("%d %d %d %d %d", &yek.type_insertion, &yek.indice, &yek.rotation, &yek.x, &yek.y);
@@ -243,7 +332,7 @@ int main()
         }
         else
         {
-                    update_laby(&laby, &adversaire);
+            update_laby(&laby, &adversaire);
 
             printf("Attente du coup de l'adversaire\n");
 
@@ -259,7 +348,7 @@ int main()
         }
         // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
 
-        print_laby(&laby);
+        print_laby(&laby, true);
     }
 
     // Affichage de la raison de la fin (gagné ou autre)

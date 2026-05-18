@@ -37,11 +37,11 @@ Structure des bits :
  ITEM peut aller de 0 à 256
 */
 
-#define SHIFT_BIT_OUEST  8
-#define SHIFT_BIT_SUD    SHIFT_BIT_OUEST+1
-#define SHIFT_BIT_EST    SHIFT_BIT_SUD+1
-#define SHIFT_BIT_NORD   SHIFT_BIT_EST+1
-#define MASK_ITEM       0xFF
+#define SHIFT_BIT_OUEST 8
+#define SHIFT_BIT_SUD SHIFT_BIT_OUEST + 1
+#define SHIFT_BIT_EST SHIFT_BIT_SUD + 1
+#define SHIFT_BIT_NORD SHIFT_BIT_EST + 1
+#define MASK_ITEM 0xFF
 // Données en temps réels du labyrinthe
 extern int taille_buffer;
 
@@ -60,6 +60,13 @@ typedef struct
 extern t_joueur yek;
 extern t_joueur adversaire;
 
+typedef struct
+{
+    int presence_mur;
+
+} t_tuiles_extra;
+// extern t_tuiles_extra tuiles_extra;
+
 // Structure de donnees du labyrinthe
 typedef struct
 {
@@ -70,9 +77,8 @@ typedef struct
     char message_serveur[MAX_MESSAGE];
     int tour_joueur;
     int **laby_update;
-    
-    
-    
+    t_tuiles_extra extra;
+
 } t_laby;
 
 extern t_laby laby;
@@ -86,16 +92,18 @@ typedef struct
     int presence_mur[NBR_TUILES];
     int num_tresor;
     int tresor_recuperer[NBR_TUILES];
+    t_tuiles_extra tuiles_extra;
 
 } t_tuiles;
 
 extern t_tuiles tuiles_tresor;
 
-typedef struct
-{
-    int x;
-    int y;
-} t_coord;
-extern t_coord chemin_a_dessiner[500];
+
+// typedef struct
+// {
+//     int x;
+//     int y;
+// } t_coord;
+// extern t_coord chemin_a_dessiner[500];
 
 #endif
