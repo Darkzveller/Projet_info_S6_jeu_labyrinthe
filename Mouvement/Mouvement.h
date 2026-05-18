@@ -15,9 +15,5 @@ void transfer_labydata_to_laby_update(t_laby *laby);
 void print_laby(t_laby *laby, bool activate);
 void update_laby(t_laby *laby, t_joueur *adversaire);
 
-// A tester
-int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor);
-void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine);
-int phaseRemontee(t_laby *laby, t_tuiles *tuiles_tresor, t_joueur *yek);
 
 #endif

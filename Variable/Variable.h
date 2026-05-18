@@ -87,6 +87,8 @@ typedef struct
     char message_serveur[MAX_MESSAGE];
     int tour_joueur;
     int **laby_update;
+    int **copy_laby_update;
+
     t_tuiles_extra extra;
 
 } t_laby;
@@ -101,7 +103,7 @@ typedef struct
     int y[NBR_TUILES];
     int presence_mur[NBR_TUILES];
     int num_tresor;
-    int tresor_recuperer[NBR_TUILES];
+    bool tresor_recuperer[NBR_TUILES];
     t_tuiles_extra tuiles_extra;
 
 } t_tuiles;
