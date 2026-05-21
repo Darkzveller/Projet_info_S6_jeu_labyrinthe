@@ -15,5 +15,7 @@ void transfer_labydata_to_laby_update(t_laby *laby);
 void print_laby(t_laby *laby, bool activate);
 void update_laby(t_laby *laby, t_joueur *adversaire);
 
+void copie_laby(t_laby *laby);
+bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny);
 
 #endif

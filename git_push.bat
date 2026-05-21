@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "Fonction phase expansion et remonter fonctionnelle" && git push
+git status && git add . && git commit -m "Réparation de postion trésor temporairement" && git push

@@ -17,10 +17,10 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
             if (sscanf(ptr, "%d %d %d %d %d%n", &nord, &est, &sud, &ouest, &item, &offset) >= 5)
             {
 
-                if (item > 1)
+                if (item >= 1)
                 {
-                    tuiles->x[item] = x;
-                    tuiles->y[item] = y;
+                    tuiles->x[item] = x+1;
+                    tuiles->y[item] = y+1;
                     tuiles->presence_mur[item] = (nord << 3) | (sud << 2) | (ouest << 1) | (est << 0);
                 }
 
@@ -28,10 +28,11 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
             }
         }
     }
+    tuiles->num_tresor = 1;
 #if DEBUG_POS_TUILES
     for (int i = 1; i < NBR_TUILES; i++)
     {
-        printf("item %2d px : %2d py %2d", i, tuiles->x[i], tuiles->y[i]);
+        printf("item %2d  px: %2d py: %2d", i, tuiles->x[i], tuiles->y[i]);
         printf("\n");
     }
 #endif
@@ -249,62 +250,49 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
         laby->extra.presence_mur = temp;
     }
 }
+void copie_laby(t_laby *laby)
+{
+    for (int y = 0; y < laby->sizeY; y++)
+    {
+        for (int x = 0; x < laby->sizeX; x++)
+        {
 
-// Renvoie true si le chemin a été correctement remonté, false sinon
-// int phaseRemontee(int lab[TAILLE_X][TAILLE_Y], int coord_x_depart, int coord_y_depart, int coord_x_arrivee, int coord_y_arrivee)
-//
-// int phaseRemontee(t_laby *laby, t_tuiles *tuiles_tresor, t_joueur *yek)
-//{
-//    int coord_x_depart = yek->x;
-//    int coord_y_depart = yek->y;
-//    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
-//    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
-//
-//    int lab[laby->sizeX][laby->sizeY];
-//    int x_courant = coord_x_arrivee;
-//    int y_courant = coord_y_arrivee;
-//    int distance_actuelle = lab[x_courant][y_courant];
-//
-//    if (distance_actuelle <= 0)
-//    {
-//        // L'arrivée n'a pas été atteinte pendant l'expansion
-//        return false;
-//    }
-//
-//    // Marque la case d'arrivée comme faisant partie du chemin
-//    lab[x_courant][y_courant] = tuiles_tresor->num_tresor;
-//
-//    while (!(x_courant == coord_x_depart && y_courant == coord_y_depart))
-//    {
-//        bool voisin_trouve = false;
-//
-//        // Vérifie les 4 voisins
-//        for (int d = 0; d < 4; d++)
-//        {
-//            int nx, ny;
-//            coord_case_voisine(x_courant, y_courant, d, &nx, &ny);
-//
-//            // Si voisin a la distance précédente
-//            if (lab[nx][ny] == distance_actuelle - 1)
-//            {
-//                // Marque le voisin comme faisant partie du chemin
-//                lab[nx][ny] = -2;
-//
-//                // Déplace la case courante
-//                x_courant = nx;
-//                y_courant = ny;
-//                distance_actuelle--;
-//                voisin_trouve = true;
-//                break;
-//            }
-//        }
-//
-//        if (!voisin_trouve)
-//        {
-//            // Si aucun voisin à distance r-1 n'a été trouvé, la remontée échoue
-//            return false;
-//        }
-//    }
-//
-//    return true;
-//}
+            laby->copy_laby_update[x][y] = laby->laby_update[x][y];
+        }
+    }
+}
+
+// Renvoie les coordonnées de la case voisine à partir d'une case (x, y) et d'une direction d
+// d = 0 : Nord, 1 : Est, 2 : Sud, 3 : Ouest
+bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
+{
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+
+    // Détermine les coordonnées de la case voisine
+    *nx = x + dx[dir];
+    *ny = y + dy[dir];
+
+    // Vérifie si on sort du labyrinthe
+    if (*nx < 0 || *ny < 0 || *nx >= laby->sizeX || *ny >= laby->sizeY)
+    {
+        return false;
+    }
+
+    // // 1. Récupération et vérification des murs de la case actuelle
+    int cell_actu = laby->copy_laby_update[x][y]; // ou laby_update selon votre structure
+    if (dir == NORD  && (cell_actu & MUR_NORD))  return false;
+    if (dir == EST   && (cell_actu & MUR_EST))   return false;
+    if (dir == SUD   && (cell_actu & MUR_SUD))   return false;
+    if (dir == OUEST && (cell_actu & MUR_OUEST)) return false;
+
+    // // Vérification des murs de la case VOISINE
+    int cell_voisine = laby->copy_laby_update[*nx][*ny];
+    // // On vérifie le mur opposé sur la case voisine
+    if (dir == NORD  && (cell_voisine & MUR_SUD))   return false;
+    if (dir == EST   && (cell_voisine & MUR_OUEST)) return false;
+    if (dir == SUD   && (cell_voisine & MUR_NORD))  return false;
+    if (dir == OUEST && (cell_voisine & MUR_EST))   return false;
+
+    return true;
+}

@@ -7,72 +7,16 @@
 #include "labyrinthAPI.h"
 #include "affichage.h"
 #include "Mouvement.h"
-void copie_laby(t_laby *laby)
-{
-    for (int y = 0; y < laby->sizeY; y++)
-    {
-        for (int x = 0; x < laby->sizeX; x++)
-        {
-
-            laby->copy_laby_update[x][y] = laby->laby_update[x][y];
-        }
-    }
-}
-// Renvoie les coordonnées de la case voisine à partir d'une case (x, y) et d'une direction d
-// d = 0 : Nord, 1 : Est, 2 : Sud, 3 : Ouest
-//  void coord_case_voisine(int coord_x_actu, int coord_y_actu, int direction_voulue, int *coord_x_voisine, int *coord_y_voisine)
-#define NORD 0
-#define EST 1
-#define SUD 2
-#define OUEST 3
-#define MUR_NORD (1 << SHIFT_BIT_NORD)
-#define MUR_EST (1 << SHIFT_BIT_EST)
-#define MUR_SUD (1 << SHIFT_BIT_SUD)
-#define MUR_OUEST (1 << SHIFT_BIT_OUEST)
-bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
-{
-    static const int dx[4] = {0, 1, 0, -1};
-    static const int dy[4] = {-1, 0, 1, 0};
-
-    // Détermine les coordonnées de la case voisine
-    *nx = x + dx[dir];
-    *ny = y + dy[dir];
-
-    // Vérifie si on sort du labyrinthe
-    if (*nx < 0 || *ny < 0 || *nx >= laby->sizeX || *ny >= laby->sizeY)
-    {
-        return false;
-    }
-
-    // // 1. Récupération et vérification des murs de la case actuelle
-    // int cell_actu = laby->copy_laby_update[x][y]; // ou laby_update selon votre structure
-    // if (dir == NORD  && (cell_actu & MUR_NORD))  return false;
-    // if (dir == EST   && (cell_actu & MUR_EST))   return false;
-    // if (dir == SUD   && (cell_actu & MUR_SUD))   return false;
-    // if (dir == OUEST && (cell_actu & MUR_OUEST)) return false;
-
-    // // Vérification des murs de la case VOISINE
-    int cell_voisine = laby->copy_laby_update[*nx][*ny];
-    // // On vérifie le mur opposé sur la case voisine
-    if (dir == NORD  && (cell_voisine & MUR_SUD))   return false;
-    if (dir == EST   && (cell_voisine & MUR_OUEST)) return false;
-    if (dir == SUD   && (cell_voisine & MUR_NORD))  return false;
-    if (dir == OUEST && (cell_voisine & MUR_EST))   return false;
-
-    return true;
-}
 
 int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
 {
     int sizeX = laby->sizeX;
     int sizeY = laby->sizeY;
 
-    int coord_x_arrivee = tuiles_tresor->x[2];
-    int coord_y_arrivee = tuiles_tresor->y[2];
+    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
+    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
 
-    copie_laby(laby);
-
-    int tab[sizeX+1][sizeY+1];
+    int tab[sizeX + 1][sizeY + 1];
     for (int y = 0; y < sizeY; y++)
     {
         for (int x = 0; x < sizeX; x++)
@@ -119,7 +63,6 @@ int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
         // printf("distance %d \n", distance);
     }
 
-
     // Sauvegarde de la carte des distances
     for (int y = 0; y < sizeY; y++)
     {
@@ -159,8 +102,8 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
     printf("--------------------------------------------------\n\n");
 
     // Coordonnées de la destination (le trésor ciblé)
-    int destX = tuiles_tresor->x[2];
-    int destY = tuiles_tresor->y[2];
+    int destX = tuiles_tresor->x[tuiles_tresor->num_tresor];
+    int destY = tuiles_tresor->y[tuiles_tresor->num_tresor];
 
     printf("[DEBUG] DEPART  (Joueur) : (%d, %d) -> Valeur: %d\n", yek->x, yek->y, laby->copy_laby_update[yek->x][yek->y]);
     printf("[DEBUG] ARRIVEE (Trésor) : (%d, %d) -> Valeur: %d\n", destX, destY, laby->copy_laby_update[destX][destY]);
@@ -238,8 +181,13 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
 
     return idx; // Renvoie la taille finale du chemin trouvé
 }
+void test_insertion_tuiles_extra()
+{
+}
 void simulate_chemin_court()
 {
+    copie_laby(&laby);
+
     int chemin[500]; // stockage du chemin
 
     bool chemin_existe = phaseExpansion(&laby, &yek, &tuiles_tresor);

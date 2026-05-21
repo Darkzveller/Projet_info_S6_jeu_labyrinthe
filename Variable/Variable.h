@@ -34,6 +34,17 @@ extern char *type_partie_choisi[4];
 #define INSERTION_A_EFFECTUER 1
 
 
+#define NORD 0
+#define EST 1
+#define SUD 2
+#define OUEST 3
+#define MUR_NORD (1 << SHIFT_BIT_NORD)
+#define MUR_EST (1 << SHIFT_BIT_EST)
+#define MUR_SUD (1 << SHIFT_BIT_SUD)
+#define MUR_OUEST (1 << SHIFT_BIT_OUEST)
+
+
+
 /*
  On utilise 16 bits au total :
  - 4 bits pour les murs (Nord, Est, Sud, Ouest)
