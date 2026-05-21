@@ -33,32 +33,32 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
 {
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
-    
+
     // Détermine les coordonnées de la case voisine
     *nx = x + dx[dir];
     *ny = y + dy[dir];
-    
+
     // Vérifie si on sort du labyrinthe
     if (*nx < 0 || *ny < 0 || *nx >= laby->sizeX || *ny >= laby->sizeY)
     {
         return false;
     }
-    
-    // 1. Récupération et vérification des murs de la case actuelle
-    int cell_actu = laby->copy_laby_update[x][y]; // ou laby_update selon votre structure
-    if (dir == NORD  && (cell_actu & MUR_NORD))  return false;
-    if (dir == EST   && (cell_actu & MUR_EST))   return false;
-    if (dir == SUD   && (cell_actu & MUR_SUD))   return false;
-    if (dir == OUEST && (cell_actu & MUR_OUEST)) return false;
-    
-    // 2. CORRECTION CRITIQUE : Vérification des murs de la case VOISINE
+
+    // // 1. Récupération et vérification des murs de la case actuelle
+    // int cell_actu = laby->copy_laby_update[x][y]; // ou laby_update selon votre structure
+    // if (dir == NORD  && (cell_actu & MUR_NORD))  return false;
+    // if (dir == EST   && (cell_actu & MUR_EST))   return false;
+    // if (dir == SUD   && (cell_actu & MUR_SUD))   return false;
+    // if (dir == OUEST && (cell_actu & MUR_OUEST)) return false;
+
+    // // Vérification des murs de la case VOISINE
     int cell_voisine = laby->copy_laby_update[*nx][*ny];
-    // On vérifie le mur opposé sur la case voisine
+    // // On vérifie le mur opposé sur la case voisine
     if (dir == NORD  && (cell_voisine & MUR_SUD))   return false;
     if (dir == EST   && (cell_voisine & MUR_OUEST)) return false;
     if (dir == SUD   && (cell_voisine & MUR_NORD))  return false;
     if (dir == OUEST && (cell_voisine & MUR_EST))   return false;
-    
+
     return true;
 }
 
@@ -67,13 +67,12 @@ int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
     int sizeX = laby->sizeX;
     int sizeY = laby->sizeY;
 
-    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor+1];
-    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor+1];
+    int coord_x_arrivee = tuiles_tresor->x[2];
+    int coord_y_arrivee = tuiles_tresor->y[2];
 
-    // CORRECTION : pas de '&' ici car laby est déjà un pointeur
     copie_laby(laby);
 
-    int tab[sizeX][sizeY];
+    int tab[sizeX+1][sizeY+1];
     for (int y = 0; y < sizeY; y++)
     {
         for (int x = 0; x < sizeX; x++)
@@ -87,36 +86,39 @@ int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
     tab[startX][startY] = 1;
 
     int distance = 1;
-    int changed = 1;
-
-    while (!tab[coord_x_arrivee][coord_y_arrivee] && changed)
+    int nouvelles_cases_marquees = 1;
+    printf("phase expansion \n");
+    while (tab[coord_x_arrivee][coord_y_arrivee] == 0 && nouvelles_cases_marquees)
     {
-        changed = 0;
+        nouvelles_cases_marquees = 0;
 
-        // CORRECTION : Remplacement de size - 1 par size pour parcourir tout le plateau
-        for (int y = 0; y < sizeY; y++)
+        for (int y = 0; y < sizeY - 1; y++)
         {
-            for (int x = 0; x < sizeX; x++)
+
+            for (int x = 0; x < sizeX - 1; x++)
             {
                 if (tab[x][y] == distance)
                 {
                     for (int dir = 0; dir < 4; dir++)
                     {
                         int nx, ny;
+                        // voisin_accessible(laby, x, y, dir, &nx, &ny);
                         if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
                             continue;
 
                         if (tab[nx][ny] == 0)
                         {
                             tab[nx][ny] = distance + 1;
-                            changed = 1;
+                            nouvelles_cases_marquees = 1;
                         }
                     }
                 }
             }
         }
         distance++;
+        // printf("distance %d \n", distance);
     }
+
 
     // Sauvegarde de la carte des distances
     for (int y = 0; y < sizeY; y++)
@@ -143,9 +145,12 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
         for (int x = 0; x < sizeX; x++)
         {
             // On affiche un point si la case vaut 0 (inaccessible)
-            if (laby->copy_laby_update[x][y] == 0) {
+            if (laby->copy_laby_update[x][y] == 0)
+            {
                 printf("  . ");
-            } else {
+            }
+            else
+            {
                 printf("%3d ", laby->copy_laby_update[x][y]);
             }
         }
@@ -154,9 +159,9 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
     printf("--------------------------------------------------\n\n");
 
     // Coordonnées de la destination (le trésor ciblé)
-    int destX = tuiles_tresor->x[tuiles_tresor->num_tresor+1];
-    int destY = tuiles_tresor->y[tuiles_tresor->num_tresor+1];
-    
+    int destX = tuiles_tresor->x[2];
+    int destY = tuiles_tresor->y[2];
+
     printf("[DEBUG] DEPART  (Joueur) : (%d, %d) -> Valeur: %d\n", yek->x, yek->y, laby->copy_laby_update[yek->x][yek->y]);
     printf("[DEBUG] ARRIVEE (Trésor) : (%d, %d) -> Valeur: %d\n", destX, destY, laby->copy_laby_update[destX][destY]);
 
@@ -186,19 +191,20 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
         for (int dir = 0; dir < 4; dir++)
         {
             int nx, ny;
-            
+
             // Vérifie si le voisin est accessible (murs + limites de la grille)
+            // voisin_accessible(laby, x, y, dir, &nx, &ny);
             if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
                 continue;
 
             // Si ce voisin valide a bien la valeur inférieure
             if (laby->copy_laby_update[nx][ny] == current_value - 1)
             {
-                if (idx < max_chemin) 
+                if (idx < max_chemin)
                 {
                     chemin[idx++] = dir; // On enregistre la direction
                 }
-                
+
                 // On se déplace sur cette case voisine
                 x = nx;
                 y = ny;
@@ -210,9 +216,9 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
         // Si aucun voisin avec (current_value - 1) n'a été trouvé : blocage logique
         if (!found)
         {
-            printf("[ERREUR REMONTEE] Bloqué sur la case (%d, %d) de valeur %d. Aucun voisin ne vaut %d\n", 
-                    x, y, current_value, current_value - 1);
-            return 0; 
+            printf("[ERREUR REMONTEE] Bloqué sur la case (%d, %d) de valeur %d. Aucun voisin ne vaut %d\n",
+                   x, y, current_value, current_value - 1);
+            return 0;
         }
     }
 

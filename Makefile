@@ -2,7 +2,7 @@
 # --------------------------
 CC = gcc                 # Le compilateur C à utiliser (ici GCC)
 INCLUDE_DIRS_LIBS := $(shell find . -type d -not -path "./.*") # Répertoires supplémentaires pour les bibliothèques (vide ici)
-CFLAGS = -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS_LIBS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak# Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
+CFLAGS = -g -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS_LIBS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak# Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
 LIBS =# Bibliothèques à lier (ici X11 pour l'affichage graphique)
 LIBSDIR =# Répertoires supplémentaires pour les bibliothèques (vide ici)
 # Fichiers du projet

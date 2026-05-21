@@ -12,7 +12,7 @@
 #define DEBUG_CONNECT_SERV 0
 #define DEBUG_DATA_STRUCT_LABY 0
 #define ACTIVE_AFFICHAGE_LABY 1
-#define DEBUG_POS_TUILES 0
+#define DEBUG_POS_TUILES 1
 
 // Information du serveur
 extern const char *nom_serveur;
