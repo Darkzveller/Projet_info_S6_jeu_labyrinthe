@@ -28,6 +28,17 @@ typedef struct
     int y[500];
 
 } t_case_strat;
+int coup_interdit_type = -1;
+int coup_interdit_indice = -1;
+
+void determiner_coup_interdit(int type_adversaire, int indice_adversaire, int *coup_interdit_type, int *coup_interdit_indice)
+{
+    // On utilise l'astérisque pour modifier la valeur stockée à l'adresse mémoire
+    *coup_interdit_indice = indice_adversaire;
+
+    // Inversion binaire (0 <-> 1 et 2 <-> 3)
+    *coup_interdit_type = type_adversaire ^ 1;
+}
 
 int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *chemin, int max_chemin)
 {
@@ -241,7 +252,7 @@ void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation
         laby->copy_extra.presence_mur = temp;
     }
 }
-void simulate_chemin_court(t_joueur *joueur_actuel)
+void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int interdit_indice)
 {
     if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] && joueur_actuel->y == tuiles_tresor.y[tuiles_tresor.num_tresor])
     {
@@ -251,8 +262,7 @@ void simulate_chemin_court(t_joueur *joueur_actuel)
         joueur_actuel->type_insertion = 0;
         joueur_actuel->indice = 1;
         joueur_actuel->rotation = 0;
-
-
+        tuiles_tresor.num_tresor += 1;
         // yek->x et yek->y restent inchangés
         return; // ON QUITTE LA FONCTION DIRECTEMENT pour éviter la boucle infinie !
     }
@@ -275,6 +285,11 @@ void simulate_chemin_court(t_joueur *joueur_actuel)
         int limite_indice = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) ? laby.sizeY : laby.sizeX;
         for (int indice = 1; indice < limite_indice; indice += 2)
         {
+            // Si le coup testé est le coup interdit, on l'esquive !
+            if (type == interdit_type && indice == interdit_indice)
+            {
+                continue;
+            }
             for (int rotation = 0; rotation < 4; rotation++)
             {
                 // 1. Réinitialisation sur la grille actuelle brute
@@ -454,7 +469,7 @@ int main()
 #endif
 
     t_return_code resultat_move = NORMAL_MOVE;
-
+    tuiles_tresor.num_tresor = 1; // On commence la partie au trésor 1
     yek.x = 0;
     yek.y = 0;
     adversaire.x = laby.sizeX - 1;
@@ -475,8 +490,8 @@ int main()
 
         if (laby.tour_joueur == 0)
         {
-            simulate_chemin_court(&yek);
-
+            simulate_chemin_court(&yek, coup_interdit_type, coup_interdit_indice);
+            
             update_labyV2(&laby, &yek, &yek);
             printf("Entre coup chef : ");
             // scanf("%d %d %d %d %d", &yek.type_insertion, &yek.indice, &yek.rotation, &yek.x, &yek.y);
@@ -506,6 +521,7 @@ int main()
             update_labyV2(&laby, &adversaire, &yek);
 
             printf("L'adversaire a joué vers : type : %d indice : %d rotation: %d x : %d y : %d\n", adversaire.type_insertion, adversaire.indice, adversaire.rotation, adversaire.x, adversaire.y);
+            determiner_coup_interdit(adversaire.type_insertion, adversaire.indice, &coup_interdit_type, &coup_interdit_indice);
         }
         // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
 

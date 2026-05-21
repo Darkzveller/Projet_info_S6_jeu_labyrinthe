@@ -2,40 +2,30 @@
 
 void position_tresor(t_laby *laby, t_tuiles *tuiles)
 {
-    char *ptr = laby->labyData;
-    int nord = 0;
-    int est = 0;
-    int sud = 0;
-    int ouest = 0;
-    int item = 0;
-    int offset = 0;
-
+    // On parcourt la matrice réelle [x][y] mise à jour
     for (int y = 0; y < laby->sizeY; y++)
     {
         for (int x = 0; x < laby->sizeX; x++)
         {
-            if (sscanf(ptr, "%d %d %d %d %d%n", &nord, &est, &sud, &ouest, &item, &offset) >= 5)
+            // 1. On récupère la valeur binaire de la tuile actuelle
+            int tuile_cle = laby->laby_update[x][y];
+
+            // 2. On extrait l'ID de l'item (les 8 bits de poids faible)
+            int item = tuile_cle & 0xFF; 
+
+            // 3. Si un trésor (item >= 1) est présent sur cette tuile
+            if (item >= 1)
             {
-
-                if (item >= 1)
-                {
-                    tuiles->x[item] = x + 0;
-                    tuiles->y[item] = y + 0;
-                    tuiles->presence_mur[item] = (nord << 3) | (sud << 2) | (ouest << 1) | (est << 0);
-                }
-
-                ptr += offset;
+                tuiles->x[item] = x;
+                tuiles->y[item] = y;
+                
+                // On garde l'information des murs de la tuile au cas où
+                tuiles->presence_mur[item] = tuile_cle; 
             }
         }
     }
-    tuiles->num_tresor = 1;
-#if DEBUG_POS_TUILES
-    for (int i = 1; i < NBR_TUILES; i++)
-    {
-        printf("item %2d  px: %2d py: %2d", i, tuiles->x[i], tuiles->y[i]);
-        printf("\n");
-    }
-#endif
+    
+    // Surtout PAS de "tuiles->num_tresor = 1;" ici !
 }
 void print_laby(t_laby *laby, bool activate)
 {
