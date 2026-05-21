@@ -19,8 +19,8 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
 
                 if (item >= 1)
                 {
-                    tuiles->x[item] = x+1;
-                    tuiles->y[item] = y+1;
+                    tuiles->x[item] = x + 1;
+                    tuiles->y[item] = y + 1;
                     tuiles->presence_mur[item] = (nord << 3) | (sud << 2) | (ouest << 1) | (est << 0);
                 }
 
@@ -128,6 +128,11 @@ void transfer_labydata_to_laby_update(t_laby *laby)
                                            (sud << SHIFT_BIT_SUD) |
                                            (ouest << SHIFT_BIT_OUEST) |
                                            (item);
+                laby->copy_extra.presence_mur = (nord << SHIFT_BIT_NORD) |
+                                           (est << SHIFT_BIT_EST) |
+                                           (sud << SHIFT_BIT_SUD) |
+                                           (ouest << SHIFT_BIT_OUEST) |
+                                           (item);
             }
         }
     }
@@ -138,11 +143,11 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
     int var_temp = 0;
     if (adversaire->rotation != 0)
     {
-        int nord = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_NORD) & 1;
-        int est = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_EST) & 1;
-        int sud = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_SUD) & 1;
-        int ouest = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> SHIFT_BIT_OUEST) & 1;
-        int item = (laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] >> 0) & 0xFF;
+        int nord = (laby->copy_extra.presence_mur >> SHIFT_BIT_NORD) & 1;
+        int est =  (laby->copy_extra.presence_mur >> SHIFT_BIT_EST) & 1;
+        int sud =  (laby->copy_extra.presence_mur >> SHIFT_BIT_SUD) & 1;
+        int ouest = (laby->copy_extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
+        int item =  (laby->copy_extra.presence_mur >> 0) & 0xFF;
 
         for (int i = 0; i <= adversaire->rotation; i++)
         {
@@ -156,7 +161,7 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
             sud = est_old;
             ouest = sud_old;
         }
-        laby->laby_update[laby->sizeX - 1][laby->sizeY - 1] =
+        laby->copy_extra.presence_mur =
             (nord << SHIFT_BIT_NORD) |
             (est << SHIFT_BIT_EST) |
             (sud << SHIFT_BIT_SUD) |
@@ -250,6 +255,7 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
         laby->extra.presence_mur = temp;
     }
 }
+
 void copie_laby(t_laby *laby)
 {
     for (int y = 0; y < laby->sizeY; y++)
@@ -260,6 +266,7 @@ void copie_laby(t_laby *laby)
             laby->copy_laby_update[x][y] = laby->laby_update[x][y];
         }
     }
+    laby->copy_extra = laby->extra;
 }
 
 // Renvoie les coordonnées de la case voisine à partir d'une case (x, y) et d'une direction d
@@ -281,18 +288,92 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
 
     // // 1. Récupération et vérification des murs de la case actuelle
     int cell_actu = laby->copy_laby_update[x][y]; // ou laby_update selon votre structure
-    if (dir == NORD  && (cell_actu & MUR_NORD))  return false;
-    if (dir == EST   && (cell_actu & MUR_EST))   return false;
-    if (dir == SUD   && (cell_actu & MUR_SUD))   return false;
-    if (dir == OUEST && (cell_actu & MUR_OUEST)) return false;
+    if (dir == NORD && (cell_actu & MUR_NORD))
+        return false;
+    if (dir == EST && (cell_actu & MUR_EST))
+        return false;
+    if (dir == SUD && (cell_actu & MUR_SUD))
+        return false;
+    if (dir == OUEST && (cell_actu & MUR_OUEST))
+        return false;
 
     // // Vérification des murs de la case VOISINE
     int cell_voisine = laby->copy_laby_update[*nx][*ny];
     // // On vérifie le mur opposé sur la case voisine
-    if (dir == NORD  && (cell_voisine & MUR_SUD))   return false;
-    if (dir == EST   && (cell_voisine & MUR_OUEST)) return false;
-    if (dir == SUD   && (cell_voisine & MUR_NORD))  return false;
-    if (dir == OUEST && (cell_voisine & MUR_EST))   return false;
+    if (dir == NORD && (cell_voisine & MUR_SUD))
+        return false;
+    if (dir == EST && (cell_voisine & MUR_OUEST))
+        return false;
+    if (dir == SUD && (cell_voisine & MUR_NORD))
+        return false;
+    if (dir == OUEST && (cell_voisine & MUR_EST))
+        return false;
 
     return true;
+}
+
+int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
+{
+    int sizeX = laby->sizeX;
+    int sizeY = laby->sizeY;
+
+    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
+    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
+
+    int tab[sizeX + 1][sizeY + 1];
+    for (int y = 0; y < sizeY; y++)
+    {
+        for (int x = 0; x < sizeX; x++)
+        {
+            tab[x][y] = 0;
+        }
+    }
+
+    int startX = yek->x;
+    int startY = yek->y;
+    tab[startX][startY] = 1;
+
+    int distance = 1;
+    int nouvelles_cases_marquees = 1;
+    while (tab[coord_x_arrivee][coord_y_arrivee] == 0 && nouvelles_cases_marquees)
+    {
+        nouvelles_cases_marquees = 0;
+
+        for (int y = 0; y < sizeY - 1; y++)
+        {
+
+            for (int x = 0; x < sizeX - 1; x++)
+            {
+                if (tab[x][y] == distance)
+                {
+                    for (int dir = 0; dir < 4; dir++)
+                    {
+                        int nx, ny;
+                        // voisin_accessible(laby, x, y, dir, &nx, &ny);
+                        if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
+                            continue;
+
+                        if (tab[nx][ny] == 0)
+                        {
+                            tab[nx][ny] = distance + 1;
+                            nouvelles_cases_marquees = 1;
+                        }
+                    }
+                }
+            }
+        }
+        distance++;
+        // printf("distance %d \n", distance);
+    }
+
+    // Sauvegarde de la carte des distances
+    for (int y = 0; y < sizeY; y++)
+    {
+        for (int x = 0; x < sizeX; x++)
+        {
+            laby->copy_laby_update[x][y] = tab[x][y];
+        }
+    }
+
+    return tab[coord_x_arrivee][coord_y_arrivee] > 0;
 }

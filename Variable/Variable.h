@@ -101,6 +101,8 @@ typedef struct
     int **copy_laby_update;
 
     t_tuiles_extra extra;
+        t_tuiles_extra copy_extra;
+
 
 } t_laby;
 

@@ -1,157 +1,102 @@
-// int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
-// {
-//     int sizeX = laby->sizeX;
-//     int sizeY = laby->sizeY;
-
-//     int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
-//     int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
-//     copie_laby(&laby);
-
-//     int tab[sizeX][sizeY];
-
-//     for (int y = 0; y < sizeY; y++)
-//     {
-//         for (int x = 0; x < sizeX; x++)
-//         {
-//             tab[x][y] = 0;
-//         }
-//     }
-
-//     // directions
-//     static const int dx[4] = {0, 1, 0, -1};
-//     static const int dy[4] = {-1, 0, 1, 0};
-
-//     // position de départ
-//     int startX = yek->x;
-//     int startY = yek->y;
-
-//     tab[startX][startY] = 1;
-
-//     int distance = 1;
-//     int changed = 1;
-
-//     while (!tab[coord_x_arrivee][coord_y_arrivee] && changed)
-//     {
-//         changed = 0;
-
-//         for (int y = 0; y < sizeY - 1; y++)
-//         {
-//             for (int x = 0; x < sizeX - 1; x++)
-//             {
-//                 /*
-//                 if (tab[x][y] == distance)
-//                 {
-//                     for (int dir = 0; dir < 4; dir++)
-//                     {
-//                         int nx = 0;
-//                         int ny = 0;
-
-//                         if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
-//                         {
-//                             continue;
-//                         }
-
-//                         if (tab[nx][ny] == 0)
-//                         {
-//                             tab[nx][ny] = distance + 1;
-//                             changed = 1;
-//                         }
-//                     }
-//                 }
-//             */ for (int dir = 0; dir < 4; dir++)
-//                 {
-
-//                     if (tab[x][y] == distance)
-//                     {
-                        
-//                         int nx = x;
-//                         int ny = y;
-
-//                         if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
-//                             continue;
-
-//                         if (tab[nx][ny] == 0)
-//                         {
-//                             tab[nx][ny] = distance + 1;
-//                             changed = 1;
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-//         distance++;
-//     }
-
-//     for (int y = 0; y < laby->sizeY; y++)
-//     {
-//         for (int x = 0; x < laby->sizeX; x++)
-//         {
-
-//             laby->copy_laby_update[x][y] = tab[x][y];
-//         }
-//     }
-//     return tab[coord_x_arrivee][coord_y_arrivee] > 0;
-// }
 
 // int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *chemin, int max_chemin)
 // {
 //     int sizeX = laby->sizeX;
 //     int sizeY = laby->sizeY;
 
+//     // =================================================================
+//     // 1. AFFICHAGE DU TABLEAU DES DISTANCES (Pour le débuggage)
+//     // =================================================================
+//     printf("\n--- MAP DES DISTANCES (laby->copy_laby_update) ---\n");
+//     for (int y = 0; y < sizeY; y++)
+//     {
+//         for (int x = 0; x < sizeX; x++)
+//         {
+//             // On affiche un point si la case vaut 0 (inaccessible)
+//             if (laby->copy_laby_update[x][y] == 0)
+//             {
+//                 printf("  . ");
+//             }
+//             else
+//             {
+//                 printf("%3d ", laby->copy_laby_update[x][y]);
+//             }
+//         }
+//         printf("\n");
+//     }
+//     printf("--------------------------------------------------\n\n");
+
+//     // Coordonnées de la destination (le trésor ciblé)
 //     int destX = tuiles_tresor->x[tuiles_tresor->num_tresor];
 //     int destY = tuiles_tresor->y[tuiles_tresor->num_tresor];
-//     printf("START = %d\n", laby->copy_laby_update[yek->x][yek->y]);
-//     printf("DEST = %d\n", laby->copy_laby_update[destX][destY]);
 
+//     printf("[DEBUG] DEPART  (Joueur) : (%d, %d) -> Valeur: %d\n", yek->x, yek->y, laby->copy_laby_update[yek->x][yek->y]);
+//     printf("[DEBUG] ARRIVEE (Trésor) : (%d, %d) -> Valeur: %d\n", destX, destY, laby->copy_laby_update[destX][destY]);
+
+//     // On commence la remontée depuis l'arrivée
 //     int x = destX;
 //     int y = destY;
-
 //     int idx = 0;
 
-//     // directions
-//     static const int dx[4] = {0, 1, 0, -1};
-//     static const int dy[4] = {-1, 0, 1, 0};
-
-//     // sécurité : si arrivée inaccessible
-//     if (laby->laby_update[x][y] == 0)
+//     // Sécurité : si l'arrivée possède une distance de 0, elle est strictement inaccessible
+//     if (laby->copy_laby_update[x][y] == 0)
+//     {
+//         printf("[ERREUR] La destination (%d, %d) vaut 0. Impossible de remonter.\n", x, y);
 //         return 0;
+//     }
 
+//     // =================================================================
+//     // 2. BOUCLE DE REMONTEE (De l'arrivée vers le départ)
+//     // =================================================================
 //     while (!(x == yek->x && y == yek->y))
 //     {
-//         int current_value = laby->laby_update[x][y];
-
+//         int current_value = laby->copy_laby_update[x][y];
 //         int found = 0;
 
-//         // chercher un voisin avec distance - 1
+//         printf("[REMONTEE] Case actuelle: (%d, %d) avec distance = %d\n", x, y, current_value);
+
+//         // On cherche un voisin qui possède la valeur (distance actuelle - 1)
 //         for (int dir = 0; dir < 4; dir++)
 //         {
-//             int nx = x + dx[dir];
-//             int ny = y + dy[dir];
+//             int nx, ny;
 
-//             if (nx < 0 || ny < 0 || nx >= sizeX || ny >= sizeY)
+//             // Vérifie si le voisin est accessible (murs + limites de la grille)
+//             // voisin_accessible(laby, x, y, dir, &nx, &ny);
+//             if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
 //                 continue;
 
-//             if (!voisin_accessible(laby, nx, ny, (dir + 2) % 4, &nx, &ny))
-//                 continue;
-
-//             if (laby->laby_update[nx][ny] == current_value - 1)
+//             // Si ce voisin valide a bien la valeur inférieure
+//             if (laby->copy_laby_update[nx][ny] == current_value - 1)
 //             {
-//                 // on stocke le mouvement (direction inverse)
-//                 chemin[idx++] = dir;
+//                 if (idx < max_chemin)
+//                 {
+//                     chemin[idx++] = dir; // On enregistre la direction
+//                 }
 
+//                 // On se déplace sur cette case voisine
 //                 x = nx;
 //                 y = ny;
 //                 found = 1;
-//                 break;
+//                 break; // Quitte la boucle des directions pour passer à la case suivante
 //             }
 //         }
 
+//         // Si aucun voisin avec (current_value - 1) n'a été trouvé : blocage logique
 //         if (!found)
-//             return 0; // échec remontée
+//         {
+//             printf("[ERREUR REMONTEE] Bloqué sur la case (%d, %d) de valeur %d. Aucun voisin ne vaut %d\n",
+//                    x, y, current_value, current_value - 1);
+//             return 0;
+//         }
 //     }
 
-//     // inverser le chemin (car construit de la fin vers le début)
+//     printf("[REMONTEE] Succès ! Arrivé au joueur à la case (%d, %d)\n", x, y);
+
+//     // =================================================================
+//     // 3. INVERSION DU CHEMIN
+//     // =================================================================
+//     // Le chemin a été construit à l'envers (Arrivée -> Départ)
+//     // On l'inverse pour obtenir l'ordre logique (Départ -> Arrivée)
 //     for (int i = 0; i < idx / 2; i++)
 //     {
 //         int tmp = chemin[i];
@@ -159,69 +104,36 @@
 //         chemin[idx - 1 - i] = tmp;
 //     }
 
-//     return idx; // longueur du chemin
+//     return idx; // Renvoie la taille finale du chemin trouvé
 // }
 
-// bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
+
+
+
+// void simulate_chemin_court()
 // {
-//     /*
-//         Table de déplacement des directions dans le labyrinthe.
+//     copie_laby(&laby);
 
-//         On utilise un système de direction codé ainsi :
-//             NORD  = 0
-//             EST   = 1
-//             SUD   = 2
-//             OUEST = 3
-
-//         Ces valeurs servent d'index dans les tableaux dx et dy.
-
-//         dx et dy permettent de convertir une direction en déplacement
-//         sur une grille 2D :
-
-//             - dx = variation sur l'axe X (horizontal)
-//             - dy = variation sur l'axe Y (vertical)
-
-//         Convention utilisée ici :
-//             - X augmente vers la droite
-//             - Y augmente vers le bas
-
-//         Donc :
-
-//             NORD  (0) -> on monte       -> x + 0, y - 1
-//             EST   (1) -> on va à droite -> x + 1, y + 0
-//             SUD   (2) -> on descend     -> x + 0, y + 1
-//             OUEST (3) -> on va à gauche -> x - 1, y + 0
-
-//     */
-//     static const int dx[4] = {0, 1, 0, -1};
-//     static const int dy[4] = {-1, 0, 1, 0};
-//     // Determine la coordonner de la case voisine
-//     *nx = x + dx[dir];
-//     *ny = y + dy[dir];
-//     // Vérifie si on sort du labyrinthe
-//     if (*nx < 0 || *ny < 0 || *nx >= laby->sizeX || *ny >= laby->sizeY)
+//     t_case_strat chemin;
+//     bool chemin_existe = phaseExpansion(&laby, &yek, &tuiles_tresor);
+//     if (chemin_existe)
 //     {
-//         return false;
+//         printf("Chemin trouvé !!! B)\n");
 //     }
-//     // récupération de la case actuelle
-//     int cell_actu = laby->copy_laby_update[x][y];
+//     else
+//     {
+//         printf("Pas de chemin possible entre départ et arrivée\n");
+//     }
 
-//     // Vérifie les murs
-//     if (dir == NORD && (cell_actu & MUR_NORD))
+//     int len = phaseRemontee(&laby, &yek, &tuiles_tresor, &chemin, 500);
+
+//     if (len <= 0)
 //     {
-//         return false;
+//         printf("Erreur remontée\n");
 //     }
-//     if (dir == EST && (cell_actu & MUR_EST))
+//     else
 //     {
-//         return false;
+//         printf("La longueur totale est de  %d\n", len);
 //     }
-//     if (dir == SUD && (cell_actu & MUR_SUD))
-//     {
-//         return false;
-//     }
-//     if (dir == OUEST && (cell_actu & MUR_OUEST))
-//     {
-//         return false;
-//     }
-//     return true;
 // }
+

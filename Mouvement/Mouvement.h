@@ -17,5 +17,6 @@ void update_laby(t_laby *laby, t_joueur *adversaire);
 
 void copie_laby(t_laby *laby);
 bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny);
+int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor);
 
 #endif

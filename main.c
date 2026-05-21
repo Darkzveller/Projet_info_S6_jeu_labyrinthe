@@ -7,73 +7,13 @@
 #include "labyrinthAPI.h"
 #include "affichage.h"
 #include "Mouvement.h"
-
-int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
+typedef struct
 {
-    int sizeX = laby->sizeX;
-    int sizeY = laby->sizeY;
+    int x[500];
+    int y[500];
 
-    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
-    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
+} t_case_strat;
 
-    int tab[sizeX + 1][sizeY + 1];
-    for (int y = 0; y < sizeY; y++)
-    {
-        for (int x = 0; x < sizeX; x++)
-        {
-            tab[x][y] = 0;
-        }
-    }
-
-    int startX = yek->x;
-    int startY = yek->y;
-    tab[startX][startY] = 1;
-
-    int distance = 1;
-    int nouvelles_cases_marquees = 1;
-    printf("phase expansion \n");
-    while (tab[coord_x_arrivee][coord_y_arrivee] == 0 && nouvelles_cases_marquees)
-    {
-        nouvelles_cases_marquees = 0;
-
-        for (int y = 0; y < sizeY - 1; y++)
-        {
-
-            for (int x = 0; x < sizeX - 1; x++)
-            {
-                if (tab[x][y] == distance)
-                {
-                    for (int dir = 0; dir < 4; dir++)
-                    {
-                        int nx, ny;
-                        // voisin_accessible(laby, x, y, dir, &nx, &ny);
-                        if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
-                            continue;
-
-                        if (tab[nx][ny] == 0)
-                        {
-                            tab[nx][ny] = distance + 1;
-                            nouvelles_cases_marquees = 1;
-                        }
-                    }
-                }
-            }
-        }
-        distance++;
-        // printf("distance %d \n", distance);
-    }
-
-    // Sauvegarde de la carte des distances
-    for (int y = 0; y < sizeY; y++)
-    {
-        for (int x = 0; x < sizeX; x++)
-        {
-            laby->copy_laby_update[x][y] = tab[x][y];
-        }
-    }
-
-    return tab[coord_x_arrivee][coord_y_arrivee] > 0;
-}
 int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *chemin, int max_chemin)
 {
     int sizeX = laby->sizeX;
@@ -181,36 +121,260 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *che
 
     return idx; // Renvoie la taille finale du chemin trouvé
 }
-void test_insertion_tuiles_extra()
+
+void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation)
 {
+    int var_temp = 0;
+    if (rotation != 0)
+    {
+        int nord = (laby->copy_extra.presence_mur >> SHIFT_BIT_NORD) & 1;
+        int est = (laby->copy_extra.presence_mur >> SHIFT_BIT_EST) & 1;
+        int sud = (laby->copy_extra.presence_mur >> SHIFT_BIT_SUD) & 1;
+        int ouest = (laby->copy_extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
+        int item = (laby->copy_extra.presence_mur >> 0) & 0xFF;
+
+        for (int i = 0; i <= rotation; i++)
+        {
+            int nord_old = nord;
+            int est_old = est;
+            int sud_old = sud;
+            int ouest_old = ouest;
+
+            nord = ouest_old;
+            est = nord_old;
+            sud = est_old;
+            ouest = sud_old;
+        }
+        laby->copy_extra.presence_mur =
+            (nord << SHIFT_BIT_NORD) |
+            (est << SHIFT_BIT_EST) |
+            (sud << SHIFT_BIT_SUD) |
+            (ouest << SHIFT_BIT_OUEST) |
+            (item);
+    }
+
+    if (type_insertion == INSERT_LIGNE_DROITE)
+    {
+
+        int y = indice;
+
+        // sauvegarde de la tuile expulsée
+        int temp = laby->copy_laby_update[y][0];
+
+        // décalage gauche -> droite
+        for (int x = 0; x < laby->sizeX - 1; x++)
+        {
+            laby->copy_laby_update[y][x] =
+                laby->copy_laby_update[y][x + 1];
+        }
+
+        // insertion de la tuile externe
+        laby->copy_laby_update[y][laby->sizeX - 1] =
+            laby->copy_extra.presence_mur;
+
+        // la tuile expulsée devient la nouvelle tuile externe
+        laby->copy_extra.presence_mur = temp;
+    }
+    else if (type_insertion == INSERT_LIGNE_GAUCHE)
+    {
+        int y = indice;
+
+        // sauvegarde tuile expulsée
+        int temp = laby->copy_laby_update[y][laby->sizeX - 1];
+
+        // décalage droite -> gauche
+        for (int x = laby->sizeX - 1; x > 0; x--)
+        {
+            laby->copy_laby_update[y][x] =
+                laby->copy_laby_update[y][x - 1];
+        }
+
+        // insertion de la tuile externe
+        laby->copy_laby_update[y][0] =
+            laby->copy_extra.presence_mur;
+
+        // mise à jour de la tuile externe
+        laby->copy_extra.presence_mur = temp;
+    }
+    else if (type_insertion == INSERT_COLONNE_HAUT)
+    {
+        int x = indice;
+
+        // sauvegarde de la tuile expulsée (en bas)
+        int temp = laby->copy_laby_update[laby->sizeY - 1][x];
+
+        // décalage bas <- haut
+        for (int y = laby->sizeY - 1; y > 0; y--)
+        {
+            laby->copy_laby_update[y][x] =
+                laby->copy_laby_update[y - 1][x];
+        }
+
+        // insertion de la tuile externe en haut
+        laby->copy_laby_update[0][x] =
+            laby->copy_extra.presence_mur;
+
+        // la tuile expulsée devient la nouvelle tuile externe
+        laby->copy_extra.presence_mur = temp;
+    }
+    else if (type_insertion == INSERT_COLONNE_BAS)
+    {
+        int x = indice;
+
+        // sauvegarde de la tuile expulsée (en haut)
+        int temp = laby->copy_laby_update[0][x];
+
+        // décalage haut <- bas
+        for (int y = 0; y < laby->sizeY - 1; y++)
+        {
+            laby->copy_laby_update[y][x] =
+                laby->copy_laby_update[y + 1][x];
+        }
+
+        // insertion de la tuile externe en bas
+        laby->copy_laby_update[laby->sizeY - 1][x] =
+            laby->copy_extra.presence_mur;
+
+        // mise à jour de la tuile externe
+        laby->copy_extra.presence_mur = temp;
+    }
 }
+
 void simulate_chemin_court()
 {
-    copie_laby(&laby);
+    int chemin[500];
 
-    int chemin[500]; // stockage du chemin
+    int meilleur_len = 99999; // On commence très haut
+    int meilleur_type = -1;
+    int meilleur_indice = -1;
+    int meilleure_rotation = -1;
+    bool meilleur_est_complet = false;
 
-    bool chemin_existe = phaseExpansion(&laby, &yek, &tuiles_tresor);
-    if (chemin_existe)
+    // Coordonnées réelles du trésor (selon le stockage choisi dans ton projet)
+    int destX = tuiles_tresor.x[tuiles_tresor.num_tresor];
+    int destY = tuiles_tresor.y[tuiles_tresor.num_tresor];
+
+    printf("===== DEBUT SIMULATION (Recherche Rapprochement) =====\n");
+
+    for (int type = 0; type < 4; type++)
     {
-        printf("Chemin trouvé !!! B)\n");
+        for (int indice = 1; indice < laby.sizeX; indice += 2)
+        {
+            for (int rotation = 0; rotation < 4; rotation++)
+            {
+                // 1. Réinitialisation
+                copie_laby(&laby);
+
+                // 2. Test de l'insertion
+                essaie_insertion(&laby, type, indice, rotation);
+
+                // 3. Lancement du BFS
+                bool chemin_existe = phaseExpansion(&laby, &yek, &tuiles_tresor);
+
+                int score_courant = 0;
+
+                if (chemin_existe)
+                {
+                    // --- CAS A : UN CHEMIN COMPLET EXISTE ---
+                    int len = phaseRemontee(&laby, &yek, &tuiles_tresor, chemin, 500);
+                    if (len <= 0)
+                        continue;
+
+                    score_courant = len;
+                }
+                else
+                {
+                    // --- CAS B : PAS DE CHEMIN COMPLET (Rapprochement) ---
+                    if (meilleur_est_complet)
+                        continue;
+
+                    int min_distance_manhattan = 9999;
+
+                    for (int y = 0; y < laby.sizeY; y++)
+                    {
+                        for (int x = 0; x < laby.sizeX; x++)
+                        {
+                            if (laby.copy_laby_update[x][y] > 0)
+                            {
+                                int dist_manhattan = abs(x - destX) + abs(y - destY);
+                                if (dist_manhattan < min_distance_manhattan)
+                                {
+                                    min_distance_manhattan = dist_manhattan;
+                                }
+                            }
+                        }
+                    }
+
+                    score_courant = 1000 + min_distance_manhattan;
+                }
+
+                // 5. Évaluation et Sauvegarde si c'est un meilleur coup
+                if (score_courant < meilleur_len)
+                {
+                    meilleur_len = score_courant;
+                    meilleur_type = type;
+                    meilleur_indice = indice;
+                    meilleure_rotation = rotation;
+                    meilleur_est_complet = chemin_existe;
+
+                    // Affichage des logs requis
+                    if (chemin_existe)
+                    {
+                        printf("\n>>> CHEMIN COMPLET TROUVÉ ! Longueur = %d pas (Type:%d, Indice:%d, Rot:%d)\n",
+                               score_courant, type, indice, rotation);
+                    }
+                    else
+                    {
+                        printf("\n>>> MEILLEUR RAPPROCHEMENT ! Distance restante = %d (Type:%d, Indice:%d, Rot:%d)\n",
+                               score_courant - 1000, type, indice, rotation);
+                    }
+
+                    // =================================================================
+                    // AJOUT : AFFICHAGE DE LA MAP CORRESPONDANTE AU MEILLEUR COUP
+                    // =================================================================
+                    printf("--- MAP DU NOUVEAU MEILLEUR COUP TOURNÉ (Type:%d, Indice:%d, Rot:%d) ---\n", type, indice, rotation);
+                    for (int y = 0; y < laby.sizeY; y++)
+                    {
+                        for (int x = 0; x < laby.sizeX; x++)
+                        {
+                            if (laby.copy_laby_update[x][y] == 0)
+                            {
+                                printf("  . ");
+                            }
+                            else
+                            {
+                                printf("%3d ", laby.copy_laby_update[x][y]);
+                            }
+                        }
+                        printf("\n");
+                    }
+                    printf("----------------------------------------------------------------------\n\n");
+                }
+            }
+        }
+    }
+
+    // Affichage du résultat final
+    printf("\n========== MEILLEURE INSERTION VALIDÉE ==========\n");
+    printf("Type insertion : %d\n", meilleur_type);
+    printf("Indice         : %d\n", meilleur_indice);
+    printf("Rotation       : %d\n", meilleure_rotation);
+    if (meilleur_est_complet)
+    {
+        printf("Statut         : Chemin complet (Longueur: %d)\n", meilleur_len);
+    }
+    else if (meilleur_type != -1)
+    {
+        printf("Statut         : Rapprochement maximal (Distance restante au trésor: %d)\n", meilleur_len - 1000);
     }
     else
     {
-        printf("Pas de chemin possible entre départ et arrivée\n");
+        printf("Statut         : Aucun mouvement détecté (Bloqué total)\n");
     }
-
-    int len = phaseRemontee(&laby, &yek, &tuiles_tresor, chemin, 500);
-
-    if (len <= 0)
-    {
-        printf("Erreur remontée\n");
-    }
-    else
-    {
-        printf("La longueur totale est de  %d\n", len);
-    }
+    printf("=================================================\n");
 }
+
+
 int main()
 {
     printf("caca\n");
