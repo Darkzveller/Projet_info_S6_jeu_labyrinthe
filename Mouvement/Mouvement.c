@@ -19,8 +19,8 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
 
                 if (item >= 1)
                 {
-                    tuiles->x[item] = x + 1;
-                    tuiles->y[item] = y + 1;
+                    tuiles->x[item] = x + 0;
+                    tuiles->y[item] = y + 0;
                     tuiles->presence_mur[item] = (nord << 3) | (sud << 2) | (ouest << 1) | (est << 0);
                 }
 
@@ -121,35 +121,33 @@ void transfer_labydata_to_laby_update(t_laby *laby)
                     (item);
                 ptr += offset;
             }
-            if ((x == (laby->sizeX) - 1) && (y == (laby->sizeY - 1)))
-            {
-                laby->extra.presence_mur = (nord << SHIFT_BIT_NORD) |
-                                           (est << SHIFT_BIT_EST) |
-                                           (sud << SHIFT_BIT_SUD) |
-                                           (ouest << SHIFT_BIT_OUEST) |
-                                           (item);
-                laby->copy_extra.presence_mur = (nord << SHIFT_BIT_NORD) |
-                                           (est << SHIFT_BIT_EST) |
-                                           (sud << SHIFT_BIT_SUD) |
-                                           (ouest << SHIFT_BIT_OUEST) |
-                                           (item);
-            }
         }
+    }
+    // 2. SEULEMENT ICI (après les boucles), on lit la TUILE EXTRA
+    if (sscanf(ptr, "%d %d %d %d %d%n", &nord, &est, &sud, &ouest, &item, &offset) >= 5)
+    {
+        laby->extra.presence_mur = (nord << SHIFT_BIT_NORD) |
+                                   (est << SHIFT_BIT_EST) |
+                                   (sud << SHIFT_BIT_SUD) |
+                                   (ouest << SHIFT_BIT_OUEST) |
+                                   (item);
+
+        laby->copy_extra.presence_mur = laby->extra.presence_mur;
     }
 }
 
 void update_laby(t_laby *laby, t_joueur *adversaire)
 {
-    int var_temp = 0;
+    // 1. Gestion de la rotation
     if (adversaire->rotation != 0)
     {
-        int nord = (laby->copy_extra.presence_mur >> SHIFT_BIT_NORD) & 1;
-        int est =  (laby->copy_extra.presence_mur >> SHIFT_BIT_EST) & 1;
-        int sud =  (laby->copy_extra.presence_mur >> SHIFT_BIT_SUD) & 1;
-        int ouest = (laby->copy_extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
-        int item =  (laby->copy_extra.presence_mur >> 0) & 0xFF;
+        int nord = (laby->extra.presence_mur >> SHIFT_BIT_NORD) & 1;
+        int est = (laby->extra.presence_mur >> SHIFT_BIT_EST) & 1;
+        int sud = (laby->extra.presence_mur >> SHIFT_BIT_SUD) & 1;
+        int ouest = (laby->extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
+        int item = (laby->extra.presence_mur >> 0) & 0xFF;
 
-        for (int i = 0; i <= adversaire->rotation; i++)
+        for (int i = 0; i < adversaire->rotation; i++)
         {
             int nord_old = nord;
             int est_old = est;
@@ -161,7 +159,7 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
             sud = est_old;
             ouest = sud_old;
         }
-        laby->copy_extra.presence_mur =
+        laby->extra.presence_mur =
             (nord << SHIFT_BIT_NORD) |
             (est << SHIFT_BIT_EST) |
             (sud << SHIFT_BIT_SUD) |
@@ -169,93 +167,161 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
             (item);
     }
 
-    if (adversaire->type_insertion == INSERT_LIGNE_DROITE)
-    {
-
-        int y = adversaire->indice;
-
-        // sauvegarde de la tuile expulsée
-        int temp = laby->laby_update[y][0];
-
-        // décalage gauche -> droite
-        for (int x = 0; x < laby->sizeX - 1; x++)
-        {
-            laby->laby_update[y][x] =
-                laby->laby_update[y][x + 1];
-        }
-
-        // insertion de la tuile externe
-        laby->laby_update[y][laby->sizeX - 1] =
-            laby->extra.presence_mur;
-
-        // la tuile expulsée devient la nouvelle tuile externe
-        laby->extra.presence_mur = temp;
-    }
-    else if (adversaire->type_insertion == INSERT_LIGNE_GAUCHE)
+    // 2. Décalages et insertions réelles (Correction [x][y])
+    if (adversaire->type_insertion == INSERT_LIGNE_GAUCHE)
     {
         int y = adversaire->indice;
 
-        // sauvegarde tuile expulsée
-        int temp = laby->laby_update[y][laby->sizeX - 1];
+        // Sauvegarde de la tuile expulsée à DROITE (X maximum)
+        int temp = laby->laby_update[laby->sizeX - 1][y];
 
-        // décalage droite -> gauche
+        // Décalage de la gauche vers la droite
         for (int x = laby->sizeX - 1; x > 0; x--)
         {
-            laby->laby_update[y][x] =
-                laby->laby_update[y][x - 1];
+            laby->laby_update[x][y] = laby->laby_update[x - 1][y];
         }
 
-        // insertion de la tuile externe
-        laby->laby_update[y][0] =
-            laby->extra.presence_mur;
+        // Insertion de la tuile externe à GAUCHE (X = 0)
+        laby->laby_update[0][y] = laby->extra.presence_mur;
 
-        // mise à jour de la tuile externe
+        laby->extra.presence_mur = temp;
+    }
+    else if (adversaire->type_insertion == INSERT_LIGNE_DROITE)
+    {
+        int y = adversaire->indice;
+
+        // Sauvegarde de la tuile expulsée à GAUCHE (X = 0)
+        int temp = laby->laby_update[0][y];
+
+        // Décalage de la droite vers la gauche
+        for (int x = 0; x < laby->sizeX - 1; x++)
+        {
+            laby->laby_update[x][y] = laby->laby_update[x + 1][y];
+        }
+
+        // Insertion de la tuile externe à DROITE (X maximum)
+        laby->laby_update[laby->sizeX - 1][y] = laby->extra.presence_mur;
+
         laby->extra.presence_mur = temp;
     }
     else if (adversaire->type_insertion == INSERT_COLONNE_HAUT)
     {
         int x = adversaire->indice;
 
-        // sauvegarde de la tuile expulsée (en bas)
-        int temp = laby->laby_update[laby->sizeY - 1][x];
+        // Sauvegarde de la tuile expulsée en BAS (Y maximum)
+        int temp = laby->laby_update[x][laby->sizeY - 1];
 
-        // décalage bas <- haut
+        // Décalage du haut vers le bas
         for (int y = laby->sizeY - 1; y > 0; y--)
         {
-            laby->laby_update[y][x] =
-                laby->laby_update[y - 1][x];
+            laby->laby_update[x][y] = laby->laby_update[x][y - 1];
         }
 
-        // insertion de la tuile externe en haut
-        laby->laby_update[0][x] =
-            laby->extra.presence_mur;
+        // Insertion de la tuile externe en HAUT (Y = 0)
+        laby->laby_update[x][0] = laby->extra.presence_mur;
 
-        // la tuile expulsée devient la nouvelle tuile externe
         laby->extra.presence_mur = temp;
     }
     else if (adversaire->type_insertion == INSERT_COLONNE_BAS)
     {
         int x = adversaire->indice;
 
-        // sauvegarde de la tuile expulsée (en haut)
-        int temp = laby->laby_update[0][x];
+        // Sauvegarde de la tuile expulsée en HAUT (Y = 0)
+        int temp = laby->laby_update[x][0];
 
-        // décalage haut <- bas
+        // Décalage du bas vers le haut
         for (int y = 0; y < laby->sizeY - 1; y++)
         {
-            laby->laby_update[y][x] =
-                laby->laby_update[y + 1][x];
+            laby->laby_update[x][y] = laby->laby_update[x][y + 1];
         }
 
-        // insertion de la tuile externe en bas
-        laby->laby_update[laby->sizeY - 1][x] =
-            laby->extra.presence_mur;
+        // Insertion de la tuile externe en BAS (Y maximum)
+        laby->laby_update[x][laby->sizeY - 1] = laby->extra.presence_mur;
 
-        // mise à jour de la tuile externe
         laby->extra.presence_mur = temp;
     }
 }
+void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
+{
+    // 1. Gestion de la rotation de l'extra
+    if (joueur_qui_joue->rotation != 0)
+    {
+        int nord = (laby->extra.presence_mur >> SHIFT_BIT_NORD) & 1;
+        int est = (laby->extra.presence_mur >> SHIFT_BIT_EST) & 1;
+        int sud = (laby->extra.presence_mur >> SHIFT_BIT_SUD) & 1;
+        int ouest = (laby->extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
+        int item = (laby->extra.presence_mur >> 0) & 0xFF;
 
+        for (int i = 0; i < joueur_qui_joue->rotation; i++)
+        {
+            int nord_old = nord, est_old = est, sud_old = sud, ouest_old = ouest;
+            nord = ouest_old;
+            est = nord_old;
+            sud = est_old;
+            ouest = sud_old;
+        }
+        laby->extra.presence_mur = (nord << SHIFT_BIT_NORD) | (est << SHIFT_BIT_EST) |
+                                   (sud << SHIFT_BIT_SUD) | (ouest << SHIFT_BIT_OUEST) | (item);
+    }
+
+    // 2. Décalages, insertions et mise à jour de TA position (yek)
+    if (joueur_qui_joue->type_insertion == INSERT_LIGNE_GAUCHE)
+    {
+        int y_cible = joueur_qui_joue->indice;
+        int temp = laby->laby_update[laby->sizeX - 1][y_cible];
+
+        // Si TU es sur la ligne poussée vers la droite
+        if (yek->y == y_cible) yek->x = (yek->x + 1) % laby->sizeX;
+
+        for (int x = laby->sizeX - 1; x > 0; x--)
+            laby->laby_update[x][y_cible] = laby->laby_update[x - 1][y_cible];
+
+        laby->laby_update[0][y_cible] = laby->extra.presence_mur;
+        laby->extra.presence_mur = temp;
+    }
+    else if (joueur_qui_joue->type_insertion == INSERT_LIGNE_DROITE)
+    {
+        int y_cible = joueur_qui_joue->indice;
+        int temp = laby->laby_update[0][y_cible];
+
+        // Si TU es sur la ligne poussée vers la gauche
+        if (yek->y == y_cible) yek->x = (yek->x - 1 + laby->sizeX) % laby->sizeX;
+
+        for (int x = 0; x < laby->sizeX - 1; x++)
+            laby->laby_update[x][y_cible] = laby->laby_update[x + 1][y_cible];
+
+        laby->laby_update[laby->sizeX - 1][y_cible] = laby->extra.presence_mur;
+        laby->extra.presence_mur = temp;
+    }
+    else if (joueur_qui_joue->type_insertion == INSERT_COLONNE_HAUT)
+    {
+        int x_cible = joueur_qui_joue->indice;
+        int temp = laby->laby_update[x_cible][laby->sizeY - 1];
+
+        // Si TU es sur la colonne poussée vers le bas
+        if (yek->x == x_cible) yek->y = (yek->y + 1) % laby->sizeY;
+
+        for (int y = laby->sizeY - 1; y > 0; y--)
+            laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y - 1];
+
+        laby->laby_update[x_cible][0] = laby->extra.presence_mur;
+        laby->extra.presence_mur = temp;
+    }
+    else if (joueur_qui_joue->type_insertion == INSERT_COLONNE_BAS)
+    {
+        int x_cible = joueur_qui_joue->indice;
+        int temp = laby->laby_update[x_cible][0];
+
+        // Si TU es sur la colonne poussée vers le haut
+        if (yek->x == x_cible) yek->y = (yek->y - 1 + laby->sizeY) % laby->sizeY;
+
+        for (int y = 0; y < laby->sizeY - 1; y++)
+            laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y + 1];
+
+        laby->laby_update[x_cible][laby->sizeY - 1] = laby->extra.presence_mur;
+        laby->extra.presence_mur = temp;
+    }
+}
 void copie_laby(t_laby *laby)
 {
     for (int y = 0; y < laby->sizeY; y++)
@@ -339,10 +405,10 @@ int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
     {
         nouvelles_cases_marquees = 0;
 
-        for (int y = 0; y < sizeY - 1; y++)
+        for (int y = 0; y < sizeY; y++)
         {
 
-            for (int x = 0; x < sizeX - 1; x++)
+            for (int x = 0; x < sizeX; x++)
             {
                 if (tab[x][y] == distance)
                 {
