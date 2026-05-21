@@ -11,20 +11,20 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles)
             int tuile_cle = laby->laby_update[x][y];
 
             // 2. On extrait l'ID de l'item (les 8 bits de poids faible)
-            int item = tuile_cle & 0xFF; 
+            int item = tuile_cle & 0xFF;
 
             // 3. Si un trésor (item >= 1) est présent sur cette tuile
             if (item >= 1)
             {
                 tuiles->x[item] = x;
                 tuiles->y[item] = y;
-                
+
                 // On garde l'information des murs de la tuile au cas où
-                tuiles->presence_mur[item] = tuile_cle; 
+                tuiles->presence_mur[item] = tuile_cle;
             }
         }
     }
-    
+
     // Surtout PAS de "tuiles->num_tresor = 1;" ici !
 }
 void print_laby(t_laby *laby, bool activate)
@@ -231,6 +231,7 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
         laby->extra.presence_mur = temp;
     }
 }
+
 void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 {
     // 1. Gestion de la rotation de l'extra
@@ -261,7 +262,8 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         int temp = laby->laby_update[laby->sizeX - 1][y_cible];
 
         // Si TU es sur la ligne poussée vers la droite
-        if (yek->y == y_cible) yek->x = (yek->x + 1) % laby->sizeX;
+        if (yek->y == y_cible)
+            yek->x = (yek->x + 1) % laby->sizeX;
 
         for (int x = laby->sizeX - 1; x > 0; x--)
             laby->laby_update[x][y_cible] = laby->laby_update[x - 1][y_cible];
@@ -275,7 +277,8 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         int temp = laby->laby_update[0][y_cible];
 
         // Si TU es sur la ligne poussée vers la gauche
-        if (yek->y == y_cible) yek->x = (yek->x - 1 + laby->sizeX) % laby->sizeX;
+        if (yek->y == y_cible)
+            yek->x = (yek->x - 1 + laby->sizeX) % laby->sizeX;
 
         for (int x = 0; x < laby->sizeX - 1; x++)
             laby->laby_update[x][y_cible] = laby->laby_update[x + 1][y_cible];
@@ -289,7 +292,8 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         int temp = laby->laby_update[x_cible][laby->sizeY - 1];
 
         // Si TU es sur la colonne poussée vers le bas
-        if (yek->x == x_cible) yek->y = (yek->y + 1) % laby->sizeY;
+        if (yek->x == x_cible)
+            yek->y = (yek->y + 1) % laby->sizeY;
 
         for (int y = laby->sizeY - 1; y > 0; y--)
             laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y - 1];
@@ -303,7 +307,8 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         int temp = laby->laby_update[x_cible][0];
 
         // Si TU es sur la colonne poussée vers le haut
-        if (yek->x == x_cible) yek->y = (yek->y - 1 + laby->sizeY) % laby->sizeY;
+        if (yek->x == x_cible)
+            yek->y = (yek->y - 1 + laby->sizeY) % laby->sizeY;
 
         for (int y = 0; y < laby->sizeY - 1; y++)
             laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y + 1];
@@ -312,6 +317,7 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         laby->extra.presence_mur = temp;
     }
 }
+
 void copie_laby(t_laby *laby)
 {
     for (int y = 0; y < laby->sizeY; y++)
@@ -343,7 +349,8 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
     }
 
     // // 1. Récupération et vérification des murs de la case actuelle
-    int cell_actu = laby->copy_laby_update[x][y]; // ou laby_update selon votre structure
+    int cell_actu = laby->copy_laby_update[x][y] & ~MASK_ITEM;
+    int cell_voisine = laby->copy_laby_update[*nx][*ny] & ~MASK_ITEM;
     if (dir == NORD && (cell_actu & MUR_NORD))
         return false;
     if (dir == EST && (cell_actu & MUR_EST))
@@ -353,8 +360,6 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
     if (dir == OUEST && (cell_actu & MUR_OUEST))
         return false;
 
-    // // Vérification des murs de la case VOISINE
-    int cell_voisine = laby->copy_laby_update[*nx][*ny];
     // // On vérifie le mur opposé sur la case voisine
     if (dir == NORD && (cell_voisine & MUR_SUD))
         return false;

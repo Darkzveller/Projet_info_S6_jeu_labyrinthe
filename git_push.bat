@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "J'arrive a aller jusqu'au trésor 14" && git push
+git status && git add . && git commit -m "Code fonctionne contre bot pas bouger" && git push

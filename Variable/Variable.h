@@ -59,9 +59,9 @@ Structure des bits :
 */
 
 #define SHIFT_BIT_OUEST 8
-#define SHIFT_BIT_SUD SHIFT_BIT_OUEST + 1
-#define SHIFT_BIT_EST SHIFT_BIT_SUD + 1
-#define SHIFT_BIT_NORD SHIFT_BIT_EST + 1
+#define SHIFT_BIT_SUD (SHIFT_BIT_OUEST + 1)
+#define SHIFT_BIT_EST (SHIFT_BIT_SUD + 1)
+#define SHIFT_BIT_NORD (SHIFT_BIT_EST + 1)
 #define MASK_ITEM 0xFF
 // Données en temps réels du labyrinthe
 extern int taille_buffer;
