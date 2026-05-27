@@ -76,6 +76,8 @@ typedef struct
     int rotation;
     char coup_envoi[MAX_GET_MOVE];
     char coup_recu[MAX_GET_MOVE];
+    int real_x;
+    int real_y;
 } t_joueur;
 
 extern t_joueur yek;
@@ -101,7 +103,9 @@ typedef struct
     int **copy_laby_update;
 
     t_tuiles_extra extra;
-        t_tuiles_extra copy_extra;
+    t_tuiles_extra copy_extra;
+
+    int **dist;
 
 
 } t_laby;

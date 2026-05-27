@@ -232,9 +232,94 @@ void update_laby(t_laby *laby, t_joueur *adversaire)
     }
 }
 
+// void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
+// {
+//     // 1. Gestion de la rotation de l'extra
+//     if (joueur_qui_joue->rotation != 0)
+//     {
+//         int nord = (laby->extra.presence_mur >> SHIFT_BIT_NORD) & 1;
+//         int est = (laby->extra.presence_mur >> SHIFT_BIT_EST) & 1;
+//         int sud = (laby->extra.presence_mur >> SHIFT_BIT_SUD) & 1;
+//         int ouest = (laby->extra.presence_mur >> SHIFT_BIT_OUEST) & 1;
+//         int item = (laby->extra.presence_mur >> 0) & 0xFF;
+
+//         for (int i = 0; i < joueur_qui_joue->rotation; i++)
+//         {
+//             int nord_old = nord, est_old = est, sud_old = sud, ouest_old = ouest;
+//             nord = ouest_old;
+//             est = nord_old;
+//             sud = est_old;
+//             ouest = sud_old;
+//         }
+//         laby->extra.presence_mur = (nord << SHIFT_BIT_NORD) | (est << SHIFT_BIT_EST) |
+//                                    (sud << SHIFT_BIT_SUD) | (ouest << SHIFT_BIT_OUEST) | (item);
+//     }
+
+//     // 2. Décalages, insertions et mise à jour de TA position (yek)
+//     if (joueur_qui_joue->type_insertion == INSERT_LIGNE_GAUCHE)
+//     {
+//         int y_cible = joueur_qui_joue->indice;
+//         int temp = laby->laby_update[laby->sizeX - 1][y_cible];
+
+//         // Si TU es sur la ligne poussée vers la droite
+//         if (yek->y == y_cible)
+//             yek->x = (yek->x + 1) % laby->sizeX;
+
+//         for (int x = laby->sizeX - 1; x > 0; x--)
+//             laby->laby_update[x][y_cible] = laby->laby_update[x - 1][y_cible];
+
+//         laby->laby_update[0][y_cible] = laby->extra.presence_mur;
+//         laby->extra.presence_mur = temp;
+//     }
+//     else if (joueur_qui_joue->type_insertion == INSERT_LIGNE_DROITE)
+//     {
+//         int y_cible = joueur_qui_joue->indice;
+//         int temp = laby->laby_update[0][y_cible];
+
+//         // Si TU es sur la ligne poussée vers la gauche
+//         if (yek->y == y_cible)
+//             yek->x = (yek->x - 1 + laby->sizeX) % laby->sizeX;
+
+//         for (int x = 0; x < laby->sizeX - 1; x++)
+//             laby->laby_update[x][y_cible] = laby->laby_update[x + 1][y_cible];
+
+//         laby->laby_update[laby->sizeX - 1][y_cible] = laby->extra.presence_mur;
+//         laby->extra.presence_mur = temp;
+//     }
+//     else if (joueur_qui_joue->type_insertion == INSERT_COLONNE_HAUT)
+//     {
+//         int x_cible = joueur_qui_joue->indice;
+//         int temp = laby->laby_update[x_cible][laby->sizeY - 1];
+
+//         // Si TU es sur la colonne poussée vers le bas
+//         if (yek->x == x_cible)
+//             yek->y = (yek->y + 1) % laby->sizeY;
+
+//         for (int y = laby->sizeY - 1; y > 0; y--)
+//             laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y - 1];
+
+//         laby->laby_update[x_cible][0] = laby->extra.presence_mur;
+//         laby->extra.presence_mur = temp;
+//     }
+//     else if (joueur_qui_joue->type_insertion == INSERT_COLONNE_BAS)
+//     {
+//         int x_cible = joueur_qui_joue->indice;
+//         int temp = laby->laby_update[x_cible][0];
+
+//         // Si TU es sur la colonne poussée vers le haut
+//         if (yek->x == x_cible)
+//             yek->y = (yek->y - 1 + laby->sizeY) % laby->sizeY;
+
+//         for (int y = 0; y < laby->sizeY - 1; y++)
+//             laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y + 1];
+
+//         laby->laby_update[x_cible][laby->sizeY - 1] = laby->extra.presence_mur;
+//         laby->extra.presence_mur = temp;
+//     }
+// }
 void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 {
-    // 1. Gestion de la rotation de l'extra
+    // 1. Gestion de la rotation de l'extra (Inchangé, c'est très bien)
     if (joueur_qui_joue->rotation != 0)
     {
         int nord = (laby->extra.presence_mur >> SHIFT_BIT_NORD) & 1;
@@ -263,7 +348,12 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 
         // Si TU es sur la ligne poussée vers la droite
         if (yek->y == y_cible)
-            yek->x = (yek->x + 1) % laby->sizeX;
+        {
+            if (yek->x == laby->sizeX - 1) // Tu étais sur la case qui sort à droite
+                yek->x = 0;                // Tu réapparais sur la case insérée à gauche
+            else
+                yek->x++;                  // Sinon, tu glisses simplement vers la droite
+        }
 
         for (int x = laby->sizeX - 1; x > 0; x--)
             laby->laby_update[x][y_cible] = laby->laby_update[x - 1][y_cible];
@@ -278,7 +368,12 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 
         // Si TU es sur la ligne poussée vers la gauche
         if (yek->y == y_cible)
-            yek->x = (yek->x - 1 + laby->sizeX) % laby->sizeX;
+        {
+            if (yek->x == 0)               // Tu étais sur la case qui sort à gauche
+                yek->x = laby->sizeX - 1;  // Tu réapparais sur la case insérée à droite
+            else
+                yek->x--;                  // Sinon, tu glisses vers la gauche
+        }
 
         for (int x = 0; x < laby->sizeX - 1; x++)
             laby->laby_update[x][y_cible] = laby->laby_update[x + 1][y_cible];
@@ -293,7 +388,12 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 
         // Si TU es sur la colonne poussée vers le bas
         if (yek->x == x_cible)
-            yek->y = (yek->y + 1) % laby->sizeY;
+        {
+            if (yek->y == laby->sizeY - 1) // Tu étais sur la case qui sort en bas
+                yek->y = 0;                // Tu réapparais sur la case insérée en haut
+            else
+                yek->y++;                  // Sinon, tu glisses vers le bas
+        }
 
         for (int y = laby->sizeY - 1; y > 0; y--)
             laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y - 1];
@@ -308,7 +408,12 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 
         // Si TU es sur la colonne poussée vers le haut
         if (yek->x == x_cible)
-            yek->y = (yek->y - 1 + laby->sizeY) % laby->sizeY;
+        {
+            if (yek->y == 0)               // Tu étais sur la case qui sort en haut
+                yek->y = laby->sizeY - 1;  // Tu réapparais sur la case insérée en bas
+            else
+                yek->y--;                  // Sinon, tu glisses vers le haut
+        }
 
         for (int y = 0; y < laby->sizeY - 1; y++)
             laby->laby_update[x_cible][y] = laby->laby_update[x_cible][y + 1];
@@ -317,7 +422,6 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         laby->extra.presence_mur = temp;
     }
 }
-
 void copie_laby(t_laby *laby)
 {
     for (int y = 0; y < laby->sizeY; y++)
