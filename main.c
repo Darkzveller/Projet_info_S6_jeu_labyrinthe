@@ -446,6 +446,7 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
     printf("==============================================\n");
 }
 
+
 int main()
 {
     printf("caca\n");
@@ -458,7 +459,7 @@ int main()
     printf("Choix partie %s\n", type_partie_choisi[BOT_BOUGE_PAS]);
 #endif
 
-    waitForLabyrinth(type_partie_choisi[BOT_BOUGE_PAS], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+    waitForLabyrinth(type_partie_choisi[BOT_BASIC], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
 #if DEBUG_DATA_STRUCT_LABY
     printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
