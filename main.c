@@ -11,145 +11,77 @@
 
 void delay(int number_of_seconds)
 {
-    // Converting time into milli_seconds
     int milli_seconds = 1000 * number_of_seconds;
-
-    // Storing start time
     clock_t start_time = clock();
-
-    // looping till required time is not achieved
     while (clock() < start_time + milli_seconds)
         ;
 }
 
-typedef struct
-{
-    int x[500];
-    int y[500];
-
-} t_case_strat;
 int coup_interdit_type = -1;
 int coup_interdit_indice = -1;
 
-void determiner_coup_interdit(int type_adversaire, int indice_adversaire, int *coup_interdit_type, int *coup_interdit_indice)
+void determiner_coup_interdit(int type_adversaire, int indice_adversaire,
+                              int *coup_interdit_type, int *coup_interdit_indice)
 {
-    // On utilise l'astérisque pour modifier la valeur stockée à l'adresse mémoire
     *coup_interdit_indice = indice_adversaire;
-
-    // Inversion binaire (0 <-> 1 et 2 <-> 3)
     *coup_interdit_type = type_adversaire ^ 1;
 }
 
-int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor, int *chemin, int max_chemin)
+/* ------------------------------------------------------------------ */
+/*  phaseRemontee : remonte le chemin depuis dist[][]                  */
+/*  copy_laby_update doit contenir les TUILES (murs).                  */
+/* ------------------------------------------------------------------ */
+int phaseRemontee(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor,
+                  int *chemin, int max_chemin)
 {
-    int sizeX = laby->sizeX;
-    int sizeY = laby->sizeY;
-
-    // =================================================================
-    // 1. AFFICHAGE DU TABLEAU DES DISTANCES (Pour le débuggage)
-    // =================================================================
-    printf("\n--- MAP DES DISTANCES (laby->copy_laby_update) ---\n");
-    for (int y = 0; y < sizeY; y++)
-    {
-        for (int x = 0; x < sizeX; x++)
-        {
-            // On affiche un point si la case vaut 0 (inaccessible)
-            if (laby->copy_laby_update[x][y] == 0)
-            {
-                printf("  . ");
-            }
-            else
-            {
-                printf("%3d ", laby->copy_laby_update[x][y]);
-            }
-        }
-        printf("\n");
-    }
-    printf("--------------------------------------------------\n\n");
-
-    // Coordonnées de la destination (le trésor ciblé)
     int destX = tuiles_tresor->x[tuiles_tresor->num_tresor];
     int destY = tuiles_tresor->y[tuiles_tresor->num_tresor];
 
-    printf("[DEBUG] DEPART  (Joueur) : (%d, %d) -> Valeur: %d\n", yek->x, yek->y, laby->copy_laby_update[yek->x][yek->y]);
-    printf("[DEBUG] ARRIVEE (Trésor) : (%d, %d) -> Valeur: %d\n", destX, destY, laby->copy_laby_update[destX][destY]);
-
-    // On commence la remontée depuis l'arrivée
-    int x = destX;
-    int y = destY;
-    int idx = 0;
-
-    // Sécurité : si l'arrivée possède une distance de 0, elle est strictement inaccessible
-    if (laby->copy_laby_update[x][y] == 0)
-    {
-        printf("[ERREUR] La destination (%d, %d) vaut 0. Impossible de remonter.\n", x, y);
+    if (laby->dist[destX][destY] == 0)
         return 0;
-    }
 
-    // =================================================================
-    // 2. BOUCLE DE REMONTEE (De l'arrivée vers le départ)
-    // =================================================================
+    int x = destX, y = destY, idx = 0;
+
     while (!(x == yek->x && y == yek->y))
     {
-        int current_value = laby->copy_laby_update[x][y];
+        int current_value = laby->dist[x][y];
         int found = 0;
 
-        printf("[REMONTEE] Case actuelle: (%d, %d) avec distance = %d\n", x, y, current_value);
-
-        // On cherche un voisin qui possède la valeur (distance actuelle - 1)
         for (int dir = 0; dir < 4; dir++)
         {
             int nx, ny;
-
-            // Vérifie si le voisin est accessible (murs + limites de la grille)
-            // voisin_accessible(laby, x, y, dir, &nx, &ny);
             if (!voisin_accessible(laby, x, y, dir, &nx, &ny))
                 continue;
-
-            // Si ce voisin valide a bien la valeur inférieure
-            if (laby->copy_laby_update[nx][ny] == current_value - 1)
+            if (laby->dist[nx][ny] == current_value - 1)
             {
                 if (idx < max_chemin)
-                {
-                    chemin[idx++] = dir; // On enregistre la direction
-                }
-
-                // On se déplace sur cette case voisine
+                    chemin[idx++] = dir;
                 x = nx;
                 y = ny;
                 found = 1;
-                break; // Quitte la boucle des directions pour passer à la case suivante
+                break;
             }
         }
 
-        // Si aucun voisin avec (current_value - 1) n'a été trouvé : blocage logique
         if (!found)
-        {
-            printf("[ERREUR REMONTEE] Bloqué sur la case (%d, %d) de valeur %d. Aucun voisin ne vaut %d\n",
-                   x, y, current_value, current_value - 1);
             return 0;
-        }
     }
 
-    printf("[REMONTEE] Succès ! Arrivé au joueur à la case (%d, %d)\n", x, y);
-
-    // =================================================================
-    // 3. INVERSION DU CHEMIN
-    // =================================================================
-    // Le chemin a été construit à l'envers (Arrivée -> Départ)
-    // On l'inverse pour obtenir l'ordre logique (Départ -> Arrivée)
+    /* Inversion du chemin (construit Arrivée→Départ) */
     for (int i = 0; i < idx / 2; i++)
     {
         int tmp = chemin[i];
         chemin[i] = chemin[idx - 1 - i];
         chemin[idx - 1 - i] = tmp;
     }
-
-    return idx; // Renvoie la taille finale du chemin trouvé
+    return idx;
 }
+
+/* ------------------------------------------------------------------ */
+/*  essaie_insertion : applique une insertion sur copy_laby_update     */
+/* ------------------------------------------------------------------ */
 void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation)
 {
-    // 1. Gestion de la rotation (Ton code est parfait ici)
     if (rotation != 0)
     {
         int nord = (laby->copy_extra.presence_mur >> SHIFT_BIT_NORD) & 1;
@@ -160,15 +92,11 @@ void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation
 
         for (int i = 0; i < rotation; i++)
         {
-            int nord_old = nord;
-            int est_old = est;
-            int sud_old = sud;
-            int ouest_old = ouest;
-
-            nord = ouest_old;
-            est = nord_old;
-            sud = est_old;
-            ouest = sud_old;
+            int n = nord, e = est, s = sud, o = ouest;
+            nord = o;
+            est = n;
+            sud = e;
+            ouest = s;
         }
         laby->copy_extra.presence_mur =
             (nord << SHIFT_BIT_NORD) |
@@ -178,331 +106,101 @@ void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation
             (item);
     }
 
-    // 2. Décalages et insertions avec le format [x][y]
     if (type_insertion == INSERT_LIGNE_GAUCHE)
     {
         int y = indice;
-
-        // Sauvegarde de la tuile expulsée à DROITE (X maximum)
         int temp = laby->copy_laby_update[laby->sizeX - 1][y];
-
-        // Décalage de la gauche vers la droite
         for (int x = laby->sizeX - 1; x > 0; x--)
-        {
             laby->copy_laby_update[x][y] = laby->copy_laby_update[x - 1][y];
-        }
-
-        // Insertion de la tuile externe à GAUCHE (X = 0)
         laby->copy_laby_update[0][y] = laby->copy_extra.presence_mur;
-
         laby->copy_extra.presence_mur = temp;
     }
     else if (type_insertion == INSERT_LIGNE_DROITE)
     {
         int y = indice;
-
-        // Sauvegarde de la tuile expulsée à GAUCHE (X = 0)
         int temp = laby->copy_laby_update[0][y];
-
-        // Décalage de la droite vers la gauche
         for (int x = 0; x < laby->sizeX - 1; x++)
-        {
             laby->copy_laby_update[x][y] = laby->copy_laby_update[x + 1][y];
-        }
-
-        // Insertion de la tuile externe à DROITE (X maximum)
         laby->copy_laby_update[laby->sizeX - 1][y] = laby->copy_extra.presence_mur;
-
         laby->copy_extra.presence_mur = temp;
     }
     else if (type_insertion == INSERT_COLONNE_HAUT)
     {
         int x = indice;
-
-        // Sauvegarde de la tuile expulsée en BAS (Y maximum)
         int temp = laby->copy_laby_update[x][laby->sizeY - 1];
-
-        // Décalage du haut vers le bas
         for (int y = laby->sizeY - 1; y > 0; y--)
-        {
             laby->copy_laby_update[x][y] = laby->copy_laby_update[x][y - 1];
-        }
-
-        // Insertion de la tuile externe en HAUT (Y = 0)
         laby->copy_laby_update[x][0] = laby->copy_extra.presence_mur;
-
         laby->copy_extra.presence_mur = temp;
     }
     else if (type_insertion == INSERT_COLONNE_BAS)
     {
         int x = indice;
-
-        // Sauvegarde de la tuile expulsée en HAUT (Y = 0)
         int temp = laby->copy_laby_update[x][0];
-
-        // Décalage du bas vers le haut
         for (int y = 0; y < laby->sizeY - 1; y++)
-        {
             laby->copy_laby_update[x][y] = laby->copy_laby_update[x][y + 1];
-        }
-
-        // Insertion de la tuile externe en BAS (Y maximum)
         laby->copy_laby_update[x][laby->sizeY - 1] = laby->copy_extra.presence_mur;
-
         laby->copy_extra.presence_mur = temp;
     }
 }
 
-// void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int interdit_indice)
-// {
-//     if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] && joueur_actuel->y == tuiles_tresor.y[tuiles_tresor.num_tresor])
-//     {
-//         printf("[INFO] Déjà sur le trésor en (%d, %d) ! On valide sans bouger.\n", joueur_actuel->x, joueur_actuel->y);
-//         int type_secours = 0;
-//         int indice_secours = 1;
-
-//         if ((type_secours == interdit_type && indice_secours == interdit_indice) || joueur_actuel->y == 1)
-//         {
-//             indice_secours = 3;
-//         }
-
-//         if (type_secours == interdit_type && indice_secours == interdit_indice)
-//         {
-//             type_secours = 2;
-//             indice_secours = (joueur_actuel->x == 1) ? 3 : 1;
-//         }
-
-//         joueur_actuel->type_insertion = type_secours;
-//         joueur_actuel->indice = indice_secours;
-//         joueur_actuel->rotation = 0;
-//         tuiles_tresor.num_tresor += 1;
-//         return;
-//     }
-
-//     int chemin[500];
-//     int meilleur_len = 99999;
-//     int meilleur_type = -1;
-//     int meilleur_indice = -1;
-//     int meilleure_rotation = -1;
-//     bool meilleur_est_complet = false;
-
-//     int destination_finale_x = joueur_actuel->x;
-//     int destination_finale_y = joueur_actuel->y;
-
-//     int destX = tuiles_tresor.x[tuiles_tresor.num_tresor];
-//     int destY = tuiles_tresor.y[tuiles_tresor.num_tresor];
-
-//     printf("===== DEBUT SIMULATION (Calcul du prochain coup) =====\n");
-
-//     for (int type = 0; type < 4; type++)
-//     {
-//         int limite_indice = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) ? laby.sizeY : laby.sizeX;
-//         for (int indice = 1; indice < limite_indice; indice += 2)
-//         {
-//             if (type == interdit_type && indice == interdit_indice)
-//             {
-//                 continue;
-//             }
-//             for (int rotation = 0; rotation < 4; rotation++)
-//             {
-//                 copie_laby(&laby);
-//                 essaie_insertion(&laby, type, indice, rotation);
-
-//                 // --- CALCUL DE LA POSITION DU JOUEUR VIRTUEL APRÈS POUSSÉE ---
-//                 t_joueur joueur_virtuel = *joueur_actuel;
-
-//                 if ((type == INSERT_LIGNE_GAUCHE) && (joueur_virtuel.y == indice))
-//                 {
-//                     joueur_virtuel.x++;
-//                     if (joueur_virtuel.x >= laby.sizeX)
-//                         joueur_virtuel.x = 0;
-//                 }
-//                 else if ((type == INSERT_LIGNE_DROITE) && (joueur_virtuel.y == indice))
-//                 {
-//                     joueur_virtuel.x--;
-//                     if (joueur_virtuel.x < 0)
-//                         joueur_virtuel.x = laby.sizeX - 1;
-//                 }
-//                 else if ((type == INSERT_COLONNE_HAUT) && (joueur_virtuel.x == indice))
-//                 {
-//                     joueur_virtuel.y++;
-//                     if (joueur_virtuel.y >= laby.sizeY)
-//                         joueur_virtuel.y = 0;
-//                 }
-//                 else if ((type == INSERT_COLONNE_BAS) && (joueur_virtuel.x == indice))
-//                 {
-//                     joueur_virtuel.y--;
-//                     if (joueur_virtuel.y < 0)
-//                         joueur_virtuel.y = laby.sizeY - 1;
-//                 }
-
-//                 // Lancement du BFS
-//                 bool chemin_existe = phaseExpansion(&laby, &joueur_virtuel, &tuiles_tresor);
-
-//                 int score_courant = 0;
-//                 int cible_locale_x = joueur_virtuel.x;
-//                 int cible_locale_y = joueur_virtuel.y;
-
-//                 if (chemin_existe)
-//                 {
-//                     int len = phaseRemontee(&laby, &joueur_virtuel, &tuiles_tresor, chemin, 500);
-//                     if (len <= 0)
-//                         continue;
-
-//                     score_courant = len;
-
-//                     // SÉCURITÉ : Au lieu d'envoyer le joueur directement sur le trésor (destX, destY)
-//                     // qui peut souffrir d'un problème d'inversion d'axe dans ta structure globale,
-//                     // on le place sur la coordonnée finale validée par le BFS lui-même.
-//                     cible_locale_x = destX;
-//                     cible_locale_y = destY;
-//                 }
-//                 else
-//                 {
-//                     if (meilleur_est_complet)
-//                         continue;
-
-//                     int min_distance_manhattan = 9999;
-
-//                     for (int y = 0; y < laby.sizeY; y++)
-//                     {
-//                         for (int x = 0; x < laby.sizeX; x++)
-//                         {
-//                             if (laby.copy_laby_update[x][y] > 0)
-//                             {
-//                                 int dist_manhattan = abs(x - destX) + abs(y - destY);
-//                                 if (dist_manhattan < min_distance_manhattan)
-//                                 {
-//                                     min_distance_manhattan = dist_manhattan;
-//                                     cible_locale_x = x;
-//                                     cible_locale_y = y;
-//                                 }
-//                             }
-//                         }
-//                     }
-//                     score_courant = 1000 + min_distance_manhattan;
-//                 }
-
-//                 if (score_courant < meilleur_len)
-//                 {
-//                     meilleur_len = score_courant;
-//                     meilleur_type = type;
-//                     meilleur_indice = indice;
-//                     meilleure_rotation = rotation;
-//                     meilleur_est_complet = chemin_existe;
-
-//                     destination_finale_x = cible_locale_x;
-//                     destination_finale_y = cible_locale_y;
-
-//                     if (chemin_existe)
-//                         printf("\n>>> CHEMIN COMPLET TROUVÉ ! Longueur = %d pas\n", score_courant);
-//                     else
-//                         printf("\n>>> MEILLEUR RAPPROCHEMENT ! Distance restante = %d\n", score_courant - 1000);
-
-//                     printf("--- MAP DU MEILLEUR COUP TOURNÉ (Type:%d, Indice:%d, Rot:%d) ---\n", type, indice, rotation);
-//                     for (int y = 0; y < laby.sizeY; y++)
-//                     {
-//                         for (int x = 0; x < laby.sizeX; x++)
-//                         {
-//                             if (laby.copy_laby_update[x][y] == 0)
-//                                 printf("  . ");
-//                             else
-//                                 printf("%3d ", laby.copy_laby_update[x][y]);
-//                         }
-//                         printf("\n");
-//                     }
-//                     printf("----------------------------------------------------------------------\n\n");
-//                 }
-//             }
-//         }
-//     }
-
-//     if (meilleur_type != -1)
-//     {
-//         joueur_actuel->type_insertion = meilleur_type;
-//         joueur_actuel->indice = meilleur_indice;
-//         joueur_actuel->rotation = meilleure_rotation;
-
-//         // Correction de l'inversion potentielle :
-//         // Si le serveur a planté sur un coup (5,5) alors qu'on demandait (5,6),
-//         // cela montre un décalage structurel ou une inversion X/Y dans le traitement réseau.
-//         // On s'assure de l'affectation stricte :
-//         joueur_actuel->x = destination_finale_x;
-//         joueur_actuel->y = destination_finale_y;
-//     }
-//     else
-//     {
-//         joueur_actuel->type_insertion = (interdit_type == 0 && interdit_indice == 1) ? 0 : 0;
-//         joueur_actuel->indice = (interdit_type == 0 && interdit_indice == 1) ? 3 : 1;
-//         joueur_actuel->rotation = 0;
-//     }
-
-//     printf("\n========== MOVE APPLIQUÉ AU JOUEUR ==========\n");
-//     printf("Type choisi : %d\n", joueur_actuel->type_insertion);
-//     printf("Indice      : %d\n", joueur_actuel->indice);
-//     printf("Rotation    : %d\n", joueur_actuel->rotation);
-//     printf("Nouvel X/Y  : (%d, %d)\n", joueur_actuel->x, joueur_actuel->y);
-
-//     printf("==============================================\n");
-// }
-
+/* ------------------------------------------------------------------ */
+/*  simulate_chemin_court                                              */
+/*  joueur_actuel->real_x/real_y = vraie position physique actuelle   */
+/*  joueur_actuel->x/y sera écrasé avec la destination calculée       */
+/* ------------------------------------------------------------------ */
 void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int interdit_indice)
 {
-if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] && 
-    joueur_actuel->y == tuiles_tresor.y[tuiles_tresor.num_tresor])
-{
-    printf("[INFO] Déjà sur le trésor en (%d, %d) ! On valide sans bouger.\n", 
-           joueur_actuel->x, joueur_actuel->y);
-
-    // Cherche une insertion neutre : elle ne doit PAS pousser la ligne/colonne du joueur
-    int type_secours = -1;
-    int indice_secours = -1;
-
-    // On essaie toutes les insertions possibles jusqu'à en trouver une valide
-    for (int type = 0; type < 4; type++)
+    /* --- Cas : déjà sur le trésor --- */
+    if (joueur_actuel->real_x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
+        joueur_actuel->real_y == tuiles_tresor.y[tuiles_tresor.num_tresor])
     {
-        int limite = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) 
-                     ? laby.sizeY : laby.sizeX;
-        for (int indice = 1; indice < limite; indice += 2)
+        printf("[INFO] Déjà sur le trésor en (%d, %d) ! On valide sans bouger.\n",
+               joueur_actuel->real_x, joueur_actuel->real_y);
+
+        int type_secours = -1;
+        int indice_secours = -1;
+
+        for (int type = 0; type < 4 && type_secours == -1; type++)
         {
-            // Interdit par règle du jeu (coup inverse du précédent)
-            if (type == interdit_type && indice == interdit_indice)
-                continue;
+            int limite = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE)
+                             ? laby.sizeY
+                             : laby.sizeX;
+            for (int indice = 1; indice < limite; indice += 2)
+            {
+                if (type == interdit_type && indice == interdit_indice)
+                    continue;
+                /* Ne pas pousser notre propre ligne */
+                if ((type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) && indice == joueur_actuel->real_y)
+                    continue;
+                /* Ne pas pousser notre propre colonne */
+                if ((type == INSERT_COLONNE_HAUT || type == INSERT_COLONNE_BAS) && indice == joueur_actuel->real_x)
+                    continue;
 
-            // Interdit si ça pousse notre ligne
-            if ((type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) 
-                && indice == joueur_actuel->y)
-                continue;
-
-            // Interdit si ça pousse notre colonne
-            if ((type == INSERT_COLONNE_HAUT || type == INSERT_COLONNE_BAS) 
-                && indice == joueur_actuel->x)
-                continue;
-
-            // On a trouvé une insertion sûre
-            type_secours = type;
-            indice_secours = indice;
-            break;
+                type_secours = type;
+                indice_secours = indice;
+                break;
+            }
         }
-        if (type_secours != -1)
-            break;
+
+        if (type_secours == -1)
+        {
+            type_secours = 0;
+            indice_secours = 1;
+        }
+
+        joueur_actuel->type_insertion = type_secours;
+        joueur_actuel->indice = indice_secours;
+        joueur_actuel->rotation = 0;
+        /* Destination = position actuelle (on ne bouge pas) */
+        joueur_actuel->x = joueur_actuel->real_x;
+        joueur_actuel->y = joueur_actuel->real_y;
+
+        tuiles_tresor.num_tresor += 1;
+        return;
     }
 
-    // Sécurité : si on n'a rien trouvé (ne devrait pas arriver), coup par défaut
-    if (type_secours == -1)
-    {
-        type_secours = 0;
-        indice_secours = 1;
-    }
-
-    joueur_actuel->type_insertion = type_secours;
-    joueur_actuel->indice = indice_secours;
-    joueur_actuel->rotation = 0;
-    // joueur_actuel->x et y restent inchangés : on reste sur place
-
-    tuiles_tresor.num_tresor += 1;  // ← on avance le trésor ici, le serveur va valider
-    return;
-}
+    /* --- Cas général : cherche le meilleur coup --- */
     int chemin[500];
     int meilleur_len = 99999;
     int meilleur_type = -1;
@@ -510,8 +208,8 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
     int meilleure_rotation = -1;
     bool meilleur_est_complet = false;
 
-    int destination_finale_x = joueur_actuel->x;
-    int destination_finale_y = joueur_actuel->y;
+    int destination_finale_x = joueur_actuel->real_x;
+    int destination_finale_y = joueur_actuel->real_y;
 
     int destX = tuiles_tresor.x[tuiles_tresor.num_tresor];
     int destY = tuiles_tresor.y[tuiles_tresor.num_tresor];
@@ -520,48 +218,84 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
 
     for (int type = 0; type < 4; type++)
     {
-        int limite_indice = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) ? laby.sizeY : laby.sizeX;
+        int limite_indice = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE)
+                                ? laby.sizeY
+                                : laby.sizeX;
         for (int indice = 1; indice < limite_indice; indice += 2)
         {
             if (type == interdit_type && indice == interdit_indice)
-            {
                 continue;
-            }
+
             for (int rotation = 0; rotation < 4; rotation++)
             {
                 copie_laby(&laby);
                 essaie_insertion(&laby, type, indice, rotation);
 
-                // --- CALCUL DE LA POSITION DU JOUEUR VIRTUEL APRÈS POUSSÉE ---
+                /* Position virtuelle du joueur après poussée */
                 t_joueur joueur_virtuel = *joueur_actuel;
+                joueur_virtuel.x = joueur_actuel->real_x;
+                joueur_virtuel.y = joueur_actuel->real_y;
 
-                if ((type == INSERT_LIGNE_GAUCHE) && (joueur_virtuel.y == indice))
+                if (type == INSERT_LIGNE_GAUCHE && joueur_virtuel.y == indice)
                 {
                     joueur_virtuel.x++;
                     if (joueur_virtuel.x >= laby.sizeX)
                         joueur_virtuel.x = 0;
                 }
-                else if ((type == INSERT_LIGNE_DROITE) && (joueur_virtuel.y == indice))
+                else if (type == INSERT_LIGNE_DROITE && joueur_virtuel.y == indice)
                 {
                     joueur_virtuel.x--;
                     if (joueur_virtuel.x < 0)
                         joueur_virtuel.x = laby.sizeX - 1;
                 }
-                else if ((type == INSERT_COLONNE_HAUT) && (joueur_virtuel.x == indice))
+                else if (type == INSERT_COLONNE_HAUT && joueur_virtuel.x == indice)
                 {
                     joueur_virtuel.y++;
                     if (joueur_virtuel.y >= laby.sizeY)
                         joueur_virtuel.y = 0;
                 }
-                else if ((type == INSERT_COLONNE_BAS) && (joueur_virtuel.x == indice))
+                else if (type == INSERT_COLONNE_BAS && joueur_virtuel.x == indice)
                 {
                     joueur_virtuel.y--;
                     if (joueur_virtuel.y < 0)
                         joueur_virtuel.y = laby.sizeY - 1;
                 }
 
-                // Lancement du BFS
-                bool chemin_existe = phaseExpansion(&laby, &joueur_virtuel, &tuiles_tresor);
+                /* Position virtuelle du TRÉSOR après la même poussée */
+                int destX_local = destX;
+                int destY_local = destY;
+
+                if (type == INSERT_LIGNE_GAUCHE && indice == destY_local)
+                {
+                    destX_local++;
+                    if (destX_local >= laby.sizeX)
+                        destX_local = 0;
+                }
+                else if (type == INSERT_LIGNE_DROITE && indice == destY_local)
+                {
+                    destX_local--;
+                    if (destX_local < 0)
+                        destX_local = laby.sizeX - 1;
+                }
+                else if (type == INSERT_COLONNE_HAUT && indice == destX_local)
+                {
+                    destY_local++;
+                    if (destY_local >= laby.sizeY)
+                        destY_local = 0;
+                }
+                else if (type == INSERT_COLONNE_BAS && indice == destX_local)
+                {
+                    destY_local--;
+                    if (destY_local < 0)
+                        destY_local = laby.sizeY - 1;
+                }
+
+                /* BFS avec la position locale du trésor */
+                t_tuiles tuiles_locales = tuiles_tresor;
+                tuiles_locales.x[tuiles_locales.num_tresor] = destX_local;
+                tuiles_locales.y[tuiles_locales.num_tresor] = destY_local;
+
+                bool chemin_existe = phaseExpansion(&laby, &joueur_virtuel, &tuiles_locales);
 
                 int score_courant = 0;
                 int cible_locale_x = joueur_virtuel.x;
@@ -569,42 +303,37 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
 
                 if (chemin_existe)
                 {
-                    int len = phaseRemontee(&laby, &joueur_virtuel, &tuiles_tresor, chemin, 500);
+                    int len = phaseRemontee(&laby, &joueur_virtuel, &tuiles_locales, chemin, 500);
                     if (len <= 0)
                         continue;
-
                     score_courant = len;
-
-                    // SÉCURITÉ : Au lieu d'envoyer le joueur directement sur le trésor (destX, destY)
-                    // qui peut souffrir d'un problème d'inversion d'axe dans ta structure globale,
-                    // on le place sur la coordonnée finale validée par le BFS lui-même.
-                    cible_locale_x = destX;
-                    cible_locale_y = destY;
+                    cible_locale_x = destX_local;
+                    cible_locale_y = destY_local;
                 }
                 else
                 {
                     if (meilleur_est_complet)
                         continue;
 
-                    int min_distance_manhattan = 9999;
-
+                    int min_dist = 9999;
                     for (int y = 0; y < laby.sizeY; y++)
                     {
                         for (int x = 0; x < laby.sizeX; x++)
                         {
-                            if (laby.copy_laby_update[x][y] > 0)
+                            if (laby.dist[x][y] > 0)
                             {
-                                int dist_manhattan = abs(x - destX) + abs(y - destY);
-                                if (dist_manhattan < min_distance_manhattan)
+                                /* Distance vers la position locale du trésor (après insertion) */
+                                int d = abs(x - destX_local) + abs(y - destY_local);
+                                if (d < min_dist)
                                 {
-                                    min_distance_manhattan = dist_manhattan;
+                                    min_dist = d;
                                     cible_locale_x = x;
                                     cible_locale_y = y;
                                 }
                             }
                         }
                     }
-                    score_courant = 1000 + min_distance_manhattan;
+                    score_courant = 1000 + min_dist;
                 }
 
                 if (score_courant < meilleur_len)
@@ -614,7 +343,6 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
                     meilleur_indice = indice;
                     meilleure_rotation = rotation;
                     meilleur_est_complet = chemin_existe;
-
                     destination_finale_x = cible_locale_x;
                     destination_finale_y = cible_locale_y;
 
@@ -623,19 +351,15 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
                     else
                         printf("\n>>> MEILLEUR RAPPROCHEMENT ! Distance restante = %d\n", score_courant - 1000);
 
-                    printf("--- MAP DU MEILLEUR COUP TOURNÉ (Type:%d, Indice:%d, Rot:%d) ---\n", type, indice, rotation);
+                    printf("--- MAP DU MEILLEUR COUP (Type:%d, Indice:%d, Rot:%d) ---\n",
+                           type, indice, rotation);
                     for (int y = 0; y < laby.sizeY; y++)
                     {
                         for (int x = 0; x < laby.sizeX; x++)
-                        {
-                            if (laby.copy_laby_update[x][y] == 0)
-                                printf("  . ");
-                            else
-                                printf("%3d ", laby.copy_laby_update[x][y]);
-                        }
+                            printf(laby.dist[x][y] == 0 ? "  . " : "%3d ", laby.dist[x][y]);
                         printf("\n");
                     }
-                    printf("----------------------------------------------------------------------\n\n");
+                    printf("------------------------------------------------------\n\n");
                 }
             }
         }
@@ -646,19 +370,17 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
         joueur_actuel->type_insertion = meilleur_type;
         joueur_actuel->indice = meilleur_indice;
         joueur_actuel->rotation = meilleure_rotation;
-
-        // Correction de l'inversion potentielle :
-        // Si le serveur a planté sur un coup (5,5) alors qu'on demandait (5,6),
-        // cela montre un décalage structurel ou une inversion X/Y dans le traitement réseau.
-        // On s'assure de l'affectation stricte :
         joueur_actuel->x = destination_finale_x;
         joueur_actuel->y = destination_finale_y;
     }
     else
     {
-        joueur_actuel->type_insertion = (interdit_type == 0 && interdit_indice == 1) ? 0 : 0;
+        /* Coup de secours si rien trouvé */
+        joueur_actuel->type_insertion = 0;
         joueur_actuel->indice = (interdit_type == 0 && interdit_indice == 1) ? 3 : 1;
         joueur_actuel->rotation = 0;
+        joueur_actuel->x = joueur_actuel->real_x;
+        joueur_actuel->y = joueur_actuel->real_y;
     }
 
     printf("\n========== MOVE APPLIQUÉ AU JOUEUR ==========\n");
@@ -666,27 +388,19 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
     printf("Indice      : %d\n", joueur_actuel->indice);
     printf("Rotation    : %d\n", joueur_actuel->rotation);
     printf("Nouvel X/Y  : (%d, %d)\n", joueur_actuel->x, joueur_actuel->y);
-
     printf("==============================================\n");
 }
 
+/* ================================================================== */
+/*  MAIN                                                               */
+/* ================================================================== */
 int main()
 {
     printf("caca\n");
-#if DEBUG_CONNECT_SERV
-    printf("Tentative de connexion au serveur \n");
-#endif
+
     connectToServer(nom_serveur, port_serveur, nom_bot_moi);
-#if DEBUG_CONNECT_SERV
-    printf("Connecter au serveur de jeu en tant que %s \n", nom_bot_moi);
-    printf("Choix partie %s\n", type_partie_choisi[BOT_BOUGE_PAS]);
-#endif
 
-    waitForLabyrinth(type_partie_choisi[(BOT_BASIC+1)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
-
-#if DEBUG_DATA_STRUCT_LABY
-    printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
-#endif
+    waitForLabyrinth(type_partie_choisi[BOT_BASIC], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
     taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
     laby.labyData = malloc(taille_buffer * sizeof(char));
@@ -694,19 +408,14 @@ int main()
     transfer_labydata_to_laby_update(&laby);
     print_laby(&laby, true);
 
-#if DEBUG_DATA_STRUCT_LABY
-    printf("Données recu du serveur, mon numéro du joueur : %d\n", laby.tour_joueur);
-    printf("Les data du labyrinthe : \n%s\n\n", laby.labyData);
-#endif
-
-#if ACTIVE_AFFICHAGE_LABY
-    initAffichage(laby.sizeX, laby.sizeY);
-#endif
-
     t_return_code resultat_move = NORMAL_MOVE;
-    tuiles_tresor.num_tresor = 1; // On commence la partie au trésor 1
+    tuiles_tresor.num_tresor = 1;
+
+    /* Position initiale */
     yek.x = 0;
     yek.y = 0;
+    yek.real_x = 0;
+    yek.real_y = 0;
     adversaire.x = laby.sizeX - 1;
     adversaire.y = laby.sizeY - 1;
 
@@ -715,88 +424,85 @@ int main()
         printf("\nAffichage du labyrinthe :\n");
         delay(1);
         printLabyrinth();
-        delay(1);
-
-        // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
-        // printf("labydata \n%d\n", laby.labyData);
-        // printf("laby_update \n%d\n", laby.laby_update);
+        printf("Position réelle yek : real_x=%d real_y=%d\n", yek.real_x, yek.real_y);
+        printf("Trésor cherché #%d en (%d, %d)\n",
+               tuiles_tresor.num_tresor,
+               tuiles_tresor.x[tuiles_tresor.num_tresor],
+               tuiles_tresor.y[tuiles_tresor.num_tresor]);
+         delay(1);
 
         position_tresor(&laby, &tuiles_tresor);
 
         if (laby.tour_joueur == 0)
         {
+            /* ---- C'est notre tour ---- */
 
-            // simulate_chemin_court(&yek, coup_interdit_type, coup_interdit_indice);
-
-            // update_labyV2(&laby, &yek, &yek);
-            // printf("Entre coup chef : ");
-            // // scanf("%d %d %d %d %d", &yek.type_insertion, &yek.indice, &yek.rotation, &yek.x, &yek.y);
-            // sprintf(yek.coup_envoi, "%d %d %d %d %d",
-            //         yek.type_insertion,
-            //         yek.indice,
-            //         yek.rotation,
-            //         yek.x,
-            //         yek.y);
-
-            // resultat_move = sendMove(yek.coup_envoi, laby.message_serveur);
-            // laby.tour_joueur = 1;
-
+            /* 1. Calcule le meilleur coup (utilise real_x/real_y en interne) */
             simulate_chemin_court(&yek, coup_interdit_type, coup_interdit_indice);
 
-// Sauvegarde de la destination AVANT que update_labyV2 ne la modifie
-int targetX = yek.x;
-int targetY = yek.y;
+            /* 2. Sauvegarde la destination calculée */
+            int targetX = yek.x;
+            int targetY = yek.y;
 
-update_labyV2(&laby, &yek, &yek);
-sprintf(yek.coup_envoi, "%d %d %d %d %d",
-        yek.type_insertion,
-        yek.indice,
-        yek.rotation,
-        targetX,   // ← destination calculée, pas la position glissée
-        targetY);
+            /* 3. Applique l'insertion sur laby_update avec la VRAIE position */
+            yek.x = yek.real_x;
+            yek.y = yek.real_y;
+            update_labyV2(&laby, &yek, &yek);
+            /* Après update_labyV2, yek.x/y = position glissée éventuelle
+               On l'ignore : la destination reste targetX/Y */
 
-printf("Entre coup chef : ");
+            /* 4. Met à jour real_x/y = destination atteinte */
+            yek.x = targetX;
+            yek.y = targetY;
+            yek.real_x = targetX;
+            yek.real_y = targetY;
 
-resultat_move = sendMove(yek.coup_envoi, laby.message_serveur);
-
-// Met à jour la position interne avec la vraie destination
-yek.x = targetX;
-yek.y = targetY;
-
-laby.tour_joueur = 1;
-
+            /* 5. Envoie le coup au serveur */
+            sprintf(yek.coup_envoi, "%d %d %d %d %d",
+                    yek.type_insertion, yek.indice, yek.rotation,
+                    targetX, targetY);
+            printf("Entre coup chef : ");
+            resultat_move = sendMove(yek.coup_envoi, laby.message_serveur);
+            laby.tour_joueur = 1;
         }
         else
         {
-
+            /* ---- Tour de l'adversaire ---- */
             printf("Attente du coup de l'adversaire\n");
-
-            // On récupère le coup de l'adversaire
             resultat_move = getMove(adversaire.coup_recu, laby.message_serveur);
             printf("L'adversaire a joué : %s\n", adversaire.coup_recu);
 
             laby.tour_joueur = 0;
-            // On met à jour les coordonnées de l'adversaire
-            sscanf(adversaire.coup_recu, "%d %d %d %d %d", &adversaire.type_insertion, &adversaire.indice, &adversaire.rotation, &adversaire.x, &adversaire.y);
-            // update_laby(&laby, &adversaire);
+            sscanf(adversaire.coup_recu, "%d %d %d %d %d",
+                   &adversaire.type_insertion, &adversaire.indice, &adversaire.rotation,
+                   &adversaire.x, &adversaire.y);
+
+            /* Applique l'insertion adverse sur le vrai plateau
+               yek.x/y contient real_x/y donc update_labyV2 calcule
+               correctement le glissement éventuel */
+            yek.x = yek.real_x;
+            yek.y = yek.real_y;
             update_labyV2(&laby, &adversaire, &yek);
 
-            printf("L'adversaire a joué vers : type : %d indice : %d rotation: %d x : %d y : %d\n", adversaire.type_insertion, adversaire.indice, adversaire.rotation, adversaire.x, adversaire.y);
-            determiner_coup_interdit(adversaire.type_insertion, adversaire.indice, &coup_interdit_type, &coup_interdit_indice);
+            /* Synchronise real après glissement éventuel */
+            yek.real_x = yek.x;
+            yek.real_y = yek.y;
+
+            printf("L'adversaire a joué vers : type:%d indice:%d rot:%d x:%d y:%d\n",
+                   adversaire.type_insertion, adversaire.indice, adversaire.rotation,
+                   adversaire.x, adversaire.y);
+            determiner_coup_interdit(adversaire.type_insertion, adversaire.indice,
+                                     &coup_interdit_type, &coup_interdit_indice);
         }
-        // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
 
         print_laby(&laby, true);
     }
 
     if (resultat_move == WINNING_MOVE)
     {
-
-        printf("vous avez gagner \n");
-        while (1)
-            ;
+        printf("vous avez gagné !\n");
+        // while (1);
     }
-    // Affichage de la raison de la fin (gagné ou autre)
     printf("Fin de la partie ! Raison : %s\n", laby.message_serveur);
 
     free(laby.labyData);
