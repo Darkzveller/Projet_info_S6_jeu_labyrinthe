@@ -1,32 +1,74 @@
 #include "Mouvement.h"
 
-void position_tresor(t_laby *laby, t_tuiles *tuiles)
+// void position_tresor(t_laby *laby, t_tuiles *tuiles)
+// {
+//     // On parcourt la matrice réelle [x][y] mise à jour
+//     for (int y = 0; y < laby->sizeY; y++)
+//     {
+//         for (int x = 0; x < laby->sizeX; x++)
+//         {
+//             // 1. On récupère la valeur binaire de la tuile actuelle
+//             int tuile_cle = laby->laby_update[x][y];
+
+//             // 2. On extrait l'ID de l'item (les 8 bits de poids faible)
+//             int item = tuile_cle & 0xFF;
+
+//             // 3. Si un trésor (item >= 1) est présent sur cette tuile
+//             if (item >= 1)
+//             {
+//                 tuiles->x[item] = x;
+//                 tuiles->y[item] = y;
+
+//                 // On garde l'information des murs de la tuile au cas où
+//                 tuiles->presence_mur[item] = tuile_cle;
+//             }
+//         }
+//     }
+
+//     // Surtout PAS de "tuiles->num_tresor = 1;" ici !
+// }
+void position_tresor(t_laby *laby, t_tuiles *tuiles, int mon_numero_joueur)
 {
-    // On parcourt la matrice réelle [x][y] mise à jour
+    // 1. On parcourt la matrice réelle [x][y] mise à jour
     for (int y = 0; y < laby->sizeY; y++)
     {
         for (int x = 0; x < laby->sizeX; x++)
         {
-            // 1. On récupère la valeur binaire de la tuile actuelle
+            // On récupère la valeur binaire de la tuile actuelle
             int tuile_cle = laby->laby_update[x][y];
 
-            // 2. On extrait l'ID de l'item (les 8 bits de poids faible)
-            int item = tuile_cle & 0xFF;
+            // On extrait l'ID réel du trésor sur le plateau (les 8 bits de poids faible)
+            int item_reel = tuile_cle & 0xFF;
 
-            // 3. Si un trésor (item >= 1) est présent sur cette tuile
-            if (item >= 1)
+            // Si un trésor (item_reel >= 1) est présent sur cette tuile
+            if (item_reel >= 1 && item_reel <= 24)
             {
-                tuiles->x[item] = x;
-                tuiles->y[item] = y;
+                int item_virtuel;
 
-                // On garde l'information des murs de la tuile au cas où
-                tuiles->presence_mur[item] = tuile_cle;
+                if (mon_numero_joueur == 0)
+                {
+                    // Joueur 0 : Pas de changement (Trésor 1 va dans l'indice 1) 
+                    item_virtuel = item_reel;
+                }
+                else
+                {
+                    // Joueur 1 : Inversion (Trésor 24 va dans l'indice 1, le 23 dans l'indice 2, etc.) 
+                    item_virtuel = 25 - item_reel;
+                }
+
+                // On stocke les coordonnées à l'indice virtuel attendu par ton simulateur
+                tuiles->x[item_virtuel] = x;
+                tuiles->y[item_virtuel] = y;
+
+                // On garde l'information des murs à l'indice virtuel au cas où
+                tuiles->presence_mur[item_virtuel] = tuile_cle;
             }
         }
     }
 
     // Surtout PAS de "tuiles->num_tresor = 1;" ici !
 }
+
 void print_laby(t_laby *laby, bool activate)
 {
     if (!activate)

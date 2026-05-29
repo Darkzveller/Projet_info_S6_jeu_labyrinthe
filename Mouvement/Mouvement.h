@@ -9,8 +9,8 @@
 
 #ifndef Strategie_H
 #define Strategie_H
-//Fonctionne
-void position_tresor(t_laby *laby, t_tuiles *tuiles);
+//Fonctionnez
+void position_tresor(t_laby *laby, t_tuiles *tuiles, int mon_numero_joueur);
 void transfer_labydata_to_laby_update(t_laby *laby);
 void print_laby(t_laby *laby, bool activate);
 void update_laby(t_laby *laby, t_joueur *adversaire);

@@ -48,7 +48,7 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *
     // =================================================================
     // 1. AFFICHAGE DU TABLEAU DES DISTANCES (Pour le débuggage)
     // =================================================================
-    printf("\n--- MAP DES DISTANCES (laby->copy_laby_update) ---\n");
+    // printf("\n--- MAP DES DISTANCES (laby->copy_laby_update) ---\n");
     for (int y = 0; y < sizeY; y++)
     {
         for (int x = 0; x < sizeX; x++)
@@ -56,23 +56,23 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *
             // On affiche un point si la case vaut 0 (inaccessible)
             if (laby->copy_laby_update[x][y] == 0)
             {
-                printf("  . ");
+                // printf("  . ");
             }
             else
             {
-                printf("%3d ", laby->copy_laby_update[x][y]);
+                // printf("%3d ", laby->copy_laby_update[x][y]);
             }
         }
-        printf("\n");
+        // printf("\n");
     }
-    printf("--------------------------------------------------\n\n");
+    // printf("--------------------------------------------------\n\n");
 
     // Coordonnées de la destination (le trésor ciblé)
     int destX = target_x;
     int destY = target_y;
 
-    printf("[DEBUG] DEPART  (Joueur) : (%d, %d) -> Valeur: %d\n", yek->x, yek->y, laby->copy_laby_update[yek->x][yek->y]);
-    printf("[DEBUG] ARRIVEE (Trésor) : (%d, %d) -> Valeur: %d\n", destX, destY, laby->copy_laby_update[destX][destY]);
+    // printf("[DEBUG] DEPART  (Joueur) : (%d, %d) -> Valeur: %d\n", yek->x, yek->y, laby->copy_laby_update[yek->x][yek->y]);
+    // printf("[DEBUG] ARRIVEE (Trésor) : (%d, %d) -> Valeur: %d\n", destX, destY, laby->copy_laby_update[destX][destY]);
 
     // On commence la remontée depuis l'arrivée
     int x = destX;
@@ -82,7 +82,7 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *
     // Sécurité : si l'arrivée possède une distance de 0, elle est strictement inaccessible
     if (laby->copy_laby_update[x][y] == 0)
     {
-        printf("[ERREUR] La destination (%d, %d) vaut 0. Impossible de remonter.\n", x, y);
+        // printf("[ERREUR] La destination (%d, %d) vaut 0. Impossible de remonter.\n", x, y);
         return 0;
     }
 
@@ -94,7 +94,7 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *
         int current_value = laby->copy_laby_update[x][y];
         int found = 0;
 
-        printf("[REMONTEE] Case actuelle: (%d, %d) avec distance = %d\n", x, y, current_value);
+        // printf("[REMONTEE] Case actuelle: (%d, %d) avec distance = %d\n", x, y, current_value);
 
         // On cherche un voisin qui possède la valeur (distance actuelle - 1)
         for (int dir = 0; dir < 4; dir++)
@@ -125,13 +125,13 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *
         // Si aucun voisin avec (current_value - 1) n'a été trouvé : blocage logique
         if (!found)
         {
-            printf("[ERREUR REMONTEE] Bloqué sur la case (%d, %d) de valeur %d. Aucun voisin ne vaut %d\n",
-                   x, y, current_value, current_value - 1);
+            // printf("[ERREUR REMONTEE] Bloqué sur la case (%d, %d) de valeur %d. Aucun voisin ne vaut %d\n",
+                //    x, y, current_value, current_value - 1);
             return 0;
         }
     }
 
-    printf("[REMONTEE] Succès ! Arrivé au joueur à la case (%d, %d)\n", x, y);
+    // printf("[REMONTEE] Succès ! Arrivé au joueur à la case (%d, %d)\n", x, y);
 
     // =================================================================
     // 3. INVERSION DU CHEMIN
@@ -451,8 +451,8 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
 if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] && 
     joueur_actuel->y == tuiles_tresor.y[tuiles_tresor.num_tresor])
 {
-    printf("[INFO] Déjà sur le trésor en (%d, %d) ! On valide sans bouger.\n", 
-           joueur_actuel->x, joueur_actuel->y);
+    // printf("[INFO] Déjà sur le trésor en (%d, %d) ! On valide sans bouger.\n", 
+    //        joueur_actuel->x, joueur_actuel->y);
 
     // Cherche une insertion neutre : elle ne doit PAS pousser la ligne/colonne du joueur
     int type_secours = -1;
@@ -516,7 +516,7 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
     int destX = tuiles_tresor.x[tuiles_tresor.num_tresor];
     int destY = tuiles_tresor.y[tuiles_tresor.num_tresor];
 
-    printf("===== DEBUT SIMULATION (Calcul du prochain coup) =====\n");
+    // printf("===== DEBUT SIMULATION (Calcul du prochain coup) =====\n");
 
     for (int type = 0; type < 4; type++)
     {
@@ -647,24 +647,24 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
                     destination_finale_x = cible_locale_x;
                     destination_finale_y = cible_locale_y;
 
-                    if (chemin_existe)
-                        printf("\n>>> CHEMIN COMPLET TROUVÉ ! Longueur = %d pas\n", score_courant);
-                    else
-                        printf("\n>>> MEILLEUR RAPPROCHEMENT ! Distance restante = %d\n", score_courant - 1000);
+                    // if (chemin_existe)
+                    //     printf("\n>>> CHEMIN COMPLET TROUVÉ ! Longueur = %d pas\n", score_courant);
+                    // else
+                    //     printf("\n>>> MEILLEUR RAPPROCHEMENT ! Distance restante = %d\n", score_courant - 1000);
 
-                    printf("--- MAP DU MEILLEUR COUP TOURNÉ (Type:%d, Indice:%d, Rot:%d) ---\n", type, indice, rotation);
+                    // printf("--- MAP DU MEILLEUR COUP TOURNÉ (Type:%d, Indice:%d, Rot:%d) ---\n", type, indice, rotation);
                     for (int y = 0; y < laby.sizeY; y++)
                     {
                         for (int x = 0; x < laby.sizeX; x++)
                         {
-                            if (laby.copy_laby_update[x][y] == 0)
-                                printf("  . ");
-                            else
-                                printf("%3d ", laby.copy_laby_update[x][y]);
+                            // if (laby.copy_laby_update[x][y] == 0)
+                            //     printf("  . ");
+                            // else
+                            //     printf("%3d ", laby.copy_laby_update[x][y]);
                         }
-                        printf("\n");
+                        // printf("\n");
                     }
-                    printf("----------------------------------------------------------------------\n\n");
+                    // printf("----------------------------------------------------------------------\n\n");
                 }
             }
         }
@@ -690,13 +690,13 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
         joueur_actuel->rotation = 0;
     }
 
-    printf("\n========== MOVE APPLIQUÉ AU JOUEUR ==========\n");
-    printf("Type choisi : %d\n", joueur_actuel->type_insertion);
-    printf("Indice      : %d\n", joueur_actuel->indice);
-    printf("Rotation    : %d\n", joueur_actuel->rotation);
-    printf("Nouvel X/Y  : (%d, %d)\n", joueur_actuel->x, joueur_actuel->y);
+    // printf("\n========== MOVE APPLIQUÉ AU JOUEUR ==========\n");
+    // printf("Type choisi : %d\n", joueur_actuel->type_insertion);
+    // printf("Indice      : %d\n", joueur_actuel->indice);
+    // printf("Rotation    : %d\n", joueur_actuel->rotation);
+    // printf("Nouvel X/Y  : (%d, %d)\n", joueur_actuel->x, joueur_actuel->y);
 
-    printf("==============================================\n");
+    // printf("==============================================\n");
 }
 
 int main()
@@ -720,6 +720,7 @@ int main()
     taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
     laby.labyData = malloc(taille_buffer * sizeof(char));
     laby.tour_joueur = getLabyrinth(laby.labyData);
+int mon_numero_joueur = laby.tour_joueur;
     transfer_labydata_to_laby_update(&laby);
     print_laby(&laby, true);
 
@@ -734,7 +735,7 @@ int main()
 
     t_return_code resultat_move = NORMAL_MOVE;
     tuiles_tresor.num_tresor = 1; // On commence la partie au trésor 1
-    if (laby.tour_joueur == 0)
+    if (mon_numero_joueur == 0)
     {
         yek.x = 0;
         yek.y = 0;
@@ -749,9 +750,11 @@ int main()
         adversaire.y = 0;
     }
 
+    int tour_actuel = 0;
+
     while (resultat_move == NORMAL_MOVE)
     {
-        printf("\nAffichage du labyrinthe :\n");
+        // printf("\nAffichage du labyrinthe :\n");
         delay(1);
         printLabyrinth();
         delay(1);
@@ -760,9 +763,9 @@ int main()
         // printf("labydata \n%d\n", laby.labyData);
         // printf("laby_update \n%d\n", laby.laby_update);
 
-        position_tresor(&laby, &tuiles_tresor);
+        position_tresor(&laby, &tuiles_tresor,mon_numero_joueur);
 
-        if (laby.tour_joueur == 0)
+        if (tour_actuel == mon_numero_joueur)
         {
 
             // simulate_chemin_court(&yek, coup_interdit_type, coup_interdit_indice);
@@ -803,7 +806,7 @@ int main()
                     targetX,
                     targetY);
 
-            printf("Entre coup chef : ");
+            // printf("Entre coup chef : ");
 
             resultat_move = sendMove(yek.coup_envoi, laby.message_serveur);
 
@@ -811,38 +814,42 @@ int main()
             yek.x = targetX;
             yek.y = targetY;
 
-            laby.tour_joueur = 1;
+            // laby.tour_joueur = 1;
+            tour_actuel = (mon_numero_joueur == 0) ? 1 : 0;
 
         }
         else
         {
 
-            printf("Attente du coup de l'adversaire\n");
+            // printf("Attente du coup de l'adversaire\n");
 
             // On récupère le coup de l'adversaire
             resultat_move = getMove(adversaire.coup_recu, laby.message_serveur);
             printf("L'adversaire a joué : %s\n", adversaire.coup_recu);
 
-            laby.tour_joueur = 0;
+            // laby.tour_joueur = 0;
+            tour_actuel = mon_numero_joueur;
             // On met à jour les coordonnées de l'adversaire
             sscanf(adversaire.coup_recu, "%d %d %d %d %d", &adversaire.type_insertion, &adversaire.indice, &adversaire.rotation, &adversaire.x, &adversaire.y);
             // update_laby(&laby, &adversaire);
             update_labyV2(&laby, &adversaire, &yek);
 
-            printf("L'adversaire a joué vers : type : %d indice : %d rotation: %d x : %d y : %d\n", adversaire.type_insertion, adversaire.indice, adversaire.rotation, adversaire.x, adversaire.y);
+            // printf("L'adversaire a joué vers : type : %d indice : %d rotation: %d x : %d y : %d\n", adversaire.type_insertion, adversaire.indice, adversaire.rotation, adversaire.x, adversaire.y);
             determiner_coup_interdit(adversaire.type_insertion, adversaire.indice, &coup_interdit_type, &coup_interdit_indice);
         }
         // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
 
-        print_laby(&laby, true);
+        print_laby(&laby, false);
     }
 
     if (resultat_move == WINNING_MOVE)
     {
 
         printf("vous avez gagner \n");
-        while (1)
-            ;
+        // while (1)
+        //     ;
+    }else if(resultat_move == LOSING_MOVE){
+        printf("Vous avez perdu \n");
     }
     // Affichage de la raison de la fin (gagné ou autre)
     printf("Fin de la partie ! Raison : %s\n", laby.message_serveur);
