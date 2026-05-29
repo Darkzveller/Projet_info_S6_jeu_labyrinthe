@@ -711,7 +711,7 @@ int main()
     printf("Choix partie %s\n", type_partie_choisi[BOT_BOUGE_PAS]);
 #endif
 
-    waitForLabyrinth(type_partie_choisi[(BOT_BASIC+1)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+    waitForLabyrinth(type_partie_choisi[(BOT_ALEATOIRE)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
 #if DEBUG_DATA_STRUCT_LABY
     printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
@@ -842,18 +842,48 @@ int mon_numero_joueur = laby.tour_joueur;
         print_laby(&laby, false);
     }
 
+    // if (resultat_move == WINNING_MOVE)
+    // {
+
+    //     printf("vous avez gagner \n");
+    //     // while (1)
+    //     //     ;
+    // }else if(resultat_move == LOSING_MOVE){
+    //     printf("Vous avez perdu \n");
+    // }
+    // // Affichage de la raison de la fin (gagné ou autre)
+    // printf("Fin de la partie ! Raison : %s\n", laby.message_serveur);
+bool dernier_joueur_actif = (tour_actuel == mon_numero_joueur) ? ((mon_numero_joueur == 0) ? 1 : 0) : mon_numero_joueur;
+
     if (resultat_move == WINNING_MOVE)
     {
-
-        printf("vous avez gagner \n");
-        // while (1)
-        //     ;
-    }else if(resultat_move == LOSING_MOVE){
-        printf("Vous avez perdu \n");
+        if (dernier_joueur_actif == mon_numero_joueur)
+        {
+            printf("Félicitations ! Vous avez GAGNÉ la partie ! 🎉\n");
+        }
+        else
+        {
+            printf("Dommage... L'adversaire a trouvé son dernier trésor et a GAGNÉ. 😞\n");
+        }
     }
-    // Affichage de la raison de la fin (gagné ou autre)
-    printf("Fin de la partie ! Raison : %s\n", laby.message_serveur);
+    else if (resultat_move == LOSING_MOVE)
+    {
+        if (dernier_joueur_actif == mon_numero_joueur)
+        {
+            printf("Vous avez PERDU... Vous avez joué un coup invalide ou fait un timeout. ❌\n");
+        }
+        else
+        {
+            printf("Victoire par forfait ! L'adversaire a commis une erreur et a PERDU. 🏆\n");
+        }
+    }
+    else
+    {
+        printf("Fin de partie inconnue ou interruption serveur.\n");
+    }
 
+    // Affichage de la raison officielle envoyée par le serveur
+    printf("Raison du serveur : %s\n", laby.message_serveur);
     free(laby.labyData);
     closeConnection();
     return 0;
