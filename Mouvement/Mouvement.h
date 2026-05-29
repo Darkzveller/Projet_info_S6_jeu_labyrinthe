@@ -18,5 +18,6 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek);
 void copie_laby(t_laby *laby);
 bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny);
 int phaseExpansion(t_laby *laby, t_joueur *yek, int target_x, int target_y);
+void localiser_tresors(t_laby *laby_state, int *tresor_x, int *tresor_y, int mon_numero_joueur);
 
 #endif

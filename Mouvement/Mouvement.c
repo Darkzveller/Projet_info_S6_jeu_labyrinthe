@@ -584,3 +584,30 @@ int phaseExpansion(t_laby *laby, t_joueur *yek, int target_x, int target_y)
 
     return tab[coord_x_arrivee][coord_y_arrivee] > 0;
 }
+
+void localiser_tresors(t_laby *laby_state, int *tresor_x, int *tresor_y, int mon_numero_joueur)
+{
+    for (int i = 0; i <= 25; i++) {
+        tresor_x[i] = -1;
+        tresor_y[i] = -1;
+    }
+    for (int y = 0; y < laby_state->sizeY; y++)
+    {
+        for (int x = 0; x < laby_state->sizeX; x++)
+        {
+            int tuile_cle = laby_state->copy_laby_update[x][y];
+            int item_reel = tuile_cle & 0xFF;
+            if (item_reel >= 1 && item_reel <= 24)
+            {
+                int item_virtuel;
+                if (mon_numero_joueur == 0)
+                    item_virtuel = item_reel;
+                else
+                    item_virtuel = 25 - item_reel;
+
+                tresor_x[item_virtuel] = x;
+                tresor_y[item_virtuel] = y;
+            }
+        }
+    }
+}

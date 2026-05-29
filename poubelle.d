@@ -1,1 +1,0 @@
-poubelle.o: poubelle.c

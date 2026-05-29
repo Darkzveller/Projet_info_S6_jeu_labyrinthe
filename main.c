@@ -255,73 +255,258 @@ void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation
 
 void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int interdit_indice)
 {
-if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] && 
-    joueur_actuel->y == tuiles_tresor.y[tuiles_tresor.num_tresor])
-{
-    // printf("[INFO] Déjà sur le trésor en (%d, %d) ! On valide sans bouger.\n", 
-    //        joueur_actuel->x, joueur_actuel->y);
-
-    // Cherche une insertion neutre : elle ne doit PAS pousser la ligne/colonne du joueur
-    int type_secours = -1;
-    int indice_secours = -1;
-
-    // On essaie toutes les insertions possibles jusqu'à en trouver une valide
-    for (int type = 0; type < 4; type++)
-    {
-        int limite = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) 
-                     ? laby.sizeY : laby.sizeX;
-        for (int indice = 1; indice < limite; indice += 2)
-        {
-            // Interdit par règle du jeu (coup inverse du précédent)
-            if (type == interdit_type && indice == interdit_indice)
-                continue;
-
-            // Interdit si ça pousse notre ligne
-            if ((type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) 
-                && indice == joueur_actuel->y)
-                continue;
-
-            // Interdit si ça pousse notre colonne
-            if ((type == INSERT_COLONNE_HAUT || type == INSERT_COLONNE_BAS) 
-                && indice == joueur_actuel->x)
-                continue;
-
-            // On a trouvé une insertion sûre
-            type_secours = type;
-            indice_secours = indice;
-            break;
-        }
-        if (type_secours != -1)
-            break;
-    }
-
-    // Sécurité : si on n'a rien trouvé (ne devrait pas arriver), coup par défaut
-    if (type_secours == -1)
-    {
-        type_secours = 0;
-        indice_secours = 1;
-    }
-
-    joueur_actuel->type_insertion = type_secours;
-    joueur_actuel->indice = indice_secours;
-    joueur_actuel->rotation = 0;
-    // joueur_actuel->x et y restent inchangés : on reste sur place
-
-    tuiles_tresor.num_tresor += 1;  // ← on avance le trésor ici, le serveur va valider
-    return;
-}
     int chemin[500];
-    int meilleur_len = 99999;
+    int meilleur_score = 99999;
     int meilleur_type = -1;
     int meilleur_indice = -1;
     int meilleure_rotation = -1;
-    bool meilleur_est_complet = false;
 
-    int destination_finale_x = joueur_actuel->x;
-    int destination_finale_y = joueur_actuel->y;
+    meilleur_chemin_complet.count = 0;
+    meilleur_chemin_complet.total_bonus_dist = 0;
+    meilleur_treasures_collected = 0;
 
-    int destX = tuiles_tresor.x[tuiles_tresor.num_tresor];
-    int destY = tuiles_tresor.y[tuiles_tresor.num_tresor];
+    // Le bonus de 10 coups n'est disponible QUE lors de la récolte du 1er trésor
+    bool bonus_disponible = (tuiles_tresor.num_tresor == 1);
+
+    for (int type = 0; type < 4; type++)
+    {
+        int limite_indice = (type == INSERT_LIGNE_GAUCHE || type == INSERT_LIGNE_DROITE) ? laby.sizeY : laby.sizeX;
+        for (int indice = 1; indice < limite_indice; indice += 2)
+        {
+            if (type == interdit_type && indice == interdit_indice)
+                continue;
+
+            for (int rotation = 0; rotation < 4; rotation++)
+            {
+                copie_laby(&laby);
+                essaie_insertion(&laby, type, indice, rotation);
+
+                // --- Position du joueur virtuel après poussée ---
+                t_joueur joueur_virtuel = *joueur_actuel;
+                if ((type == INSERT_LIGNE_GAUCHE) && (joueur_virtuel.y == indice)) {
+                    joueur_virtuel.x++;
+                    if (joueur_virtuel.x >= laby.sizeX) joueur_virtuel.x = 0;
+                } else if ((type == INSERT_LIGNE_DROITE) && (joueur_virtuel.y == indice)) {
+                    joueur_virtuel.x--;
+                    if (joueur_virtuel.x < 0) joueur_virtuel.x = laby.sizeX - 1;
+                } else if ((type == INSERT_COLONNE_HAUT) && (joueur_virtuel.x == indice)) {
+                    joueur_virtuel.y++;
+                    if (joueur_virtuel.y >= laby.sizeY) joueur_virtuel.y = 0;
+                } else if ((type == INSERT_COLONNE_BAS) && (joueur_virtuel.x == indice)) {
+                    joueur_virtuel.y--;
+                    if (joueur_virtuel.y < 0) joueur_virtuel.y = laby.sizeY - 1;
+                }
+
+                // Sauvegarde de l'état propre du labyrinthe post-insertion (murs + trésors)
+                int grid_backup[21][13];
+                for (int y = 0; y < laby.sizeY; y++)
+                    for (int x = 0; x < laby.sizeX; x++)
+                        grid_backup[x][y] = laby.copy_laby_update[x][y];
+
+                // Localiser les trésors après insertion
+                int tresor_x[26], tresor_y[26];
+                localiser_tresors(&laby, tresor_x, tresor_y, laby.tour_joueur);
+
+                int target_x = tresor_x[tuiles_tresor.num_tresor];
+                int target_y = tresor_y[tuiles_tresor.num_tresor];
+
+                if (target_x == -1 || target_y == -1)
+                    continue;
+
+                t_multi_path path_courant;
+                path_courant.count = 0;
+                path_courant.total_bonus_dist = 0;
+
+                bool cible_atteinte = false;
+                int dist_to_first = 9999;
+                int nb_tresor_total = 0;
+
+                // --- BFS vers le trésor principal ---
+                for (int y = 0; y < laby.sizeY; y++)
+                    for (int x = 0; x < laby.sizeX; x++)
+                        laby.copy_laby_update[x][y] = grid_backup[x][y];
+
+                cible_atteinte = phaseExpansion(&laby, &joueur_virtuel, target_x, target_y);
+
+                if (cible_atteinte) {
+                    int path_len = phaseRemontee(&laby, &joueur_virtuel, target_x, target_y, chemin, 500);
+                    if (path_len < 0) continue;
+
+                    // Premier arrêt obligatoire : le trésor ciblé
+                    path_courant.x[path_courant.count] = target_x;
+                    path_courant.y[path_courant.count] = target_y;
+                    path_courant.count++;
+                    nb_tresor_total = 1;
+
+                    // =========================================================
+                    // BONUS : uniquement lors de la récolte du 1er trésor
+                    // =========================================================
+                    if (bonus_disponible) {
+                        int current_bonus_target = tuiles_tresor.num_tresor + 1;
+
+                        // Enchaîner les trésors suivants dans la limite de 10 cases bonus
+                        while (current_bonus_target <= 24) {
+                            int next_x = tresor_x[current_bonus_target];
+                            int next_y = tresor_y[current_bonus_target];
+                            if (next_x == -1 || next_y == -1) break;
+
+                            t_joueur pos_last;
+                            pos_last.x = path_courant.x[path_courant.count - 1];
+                            pos_last.y = path_courant.y[path_courant.count - 1];
+
+                            // Restaurer la grille propre avant chaque BFS bonus
+                            for (int y = 0; y < laby.sizeY; y++)
+                                for (int x = 0; x < laby.sizeX; x++)
+                                    laby.copy_laby_update[x][y] = grid_backup[x][y];
+
+                            if (phaseExpansion(&laby, &pos_last, next_x, next_y)) {
+                                int next_len = phaseRemontee(&laby, &pos_last, next_x, next_y, chemin, 500);
+                                if (path_courant.total_bonus_dist + next_len <= 10) {
+                                    path_courant.x[path_courant.count] = next_x;
+                                    path_courant.y[path_courant.count] = next_y;
+                                    path_courant.count++;
+                                    path_courant.total_bonus_dist += next_len;
+                                    nb_tresor_total++;
+                                    current_bonus_target++;
+                                } else {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+
+                        // Rapprochement optimal avec le budget bonus restant
+                        if (current_bonus_target <= 24) {
+                            int next_x = tresor_x[current_bonus_target];
+                            int next_y = tresor_y[current_bonus_target];
+                            if (next_x != -1 && next_y != -1) {
+                                t_joueur pos_last;
+                                pos_last.x = path_courant.x[path_courant.count - 1];
+                                pos_last.y = path_courant.y[path_courant.count - 1];
+                                int remaining_steps = 10 - path_courant.total_bonus_dist;
+
+                                for (int y = 0; y < laby.sizeY; y++)
+                                    for (int x = 0; x < laby.sizeX; x++)
+                                        laby.copy_laby_update[x][y] = grid_backup[x][y];
+
+                                phaseExpansion(&laby, &pos_last, next_x, next_y);
+
+                                int min_dist = 9999;
+                                int best_cx = pos_last.x;
+                                int best_cy = pos_last.y;
+                                for (int y = 0; y < laby.sizeY; y++) {
+                                    for (int x = 0; x < laby.sizeX; x++) {
+                                        int val = laby.copy_laby_update[x][y];
+                                        if (val > 0 && (val - 1) <= remaining_steps) {
+                                            int dist = abs(x - next_x) + abs(y - next_y);
+                                            if (dist < min_dist) {
+                                                min_dist = dist;
+                                                best_cx = x;
+                                                best_cy = y;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (best_cx != pos_last.x || best_cy != pos_last.y) {
+                                    path_courant.x[path_courant.count] = best_cx;
+                                    path_courant.y[path_courant.count] = best_cy;
+                                    path_courant.count++;
+                                }
+                            }
+                        }
+                    }
+                    // =========================================================
+                    // FIN BONUS
+                    // =========================================================
+
+                } else {
+                    // Trésor non atteignable : rapprochement optimal simple (sans bonus)
+                    for (int y = 0; y < laby.sizeY; y++)
+                        for (int x = 0; x < laby.sizeX; x++)
+                            laby.copy_laby_update[x][y] = grid_backup[x][y];
+
+                    phaseExpansion(&laby, &joueur_virtuel, target_x, target_y);
+                    int min_dist = 9999;
+                    int best_cx = joueur_virtuel.x;
+                    int best_cy = joueur_virtuel.y;
+
+                    for (int y = 0; y < laby.sizeY; y++) {
+                        for (int x = 0; x < laby.sizeX; x++) {
+                            if (laby.copy_laby_update[x][y] > 0) {
+                                int dist = abs(x - target_x) + abs(y - target_y);
+                                if (dist < min_dist) {
+                                    min_dist = dist;
+                                    best_cx = x;
+                                    best_cy = y;
+                                }
+                            }
+                        }
+                    }
+                    path_courant.x[0] = best_cx;
+                    path_courant.y[0] = best_cy;
+                    path_courant.count = 1;
+                    dist_to_first = min_dist;
+                }
+
+                // --- Calcul du score ---
+                int score_courant = 0;
+                if (cible_atteinte) {
+                    int final_x = path_courant.x[path_courant.count - 1];
+                    int final_y = path_courant.y[path_courant.count - 1];
+                    // Trésor suivant non encore collecté (après ceux du bonus)
+                    int next_target = tuiles_tresor.num_tresor + nb_tresor_total;
+                    int dist_to_next = 0;
+                    if (next_target <= 24 && tresor_x[next_target] != -1) {
+                        dist_to_next = abs(final_x - tresor_x[next_target]) + abs(final_y - tresor_y[next_target]);
+                    }
+                    // Favoriser fortement la collecte de trésors, puis minimiser la distance au suivant
+                    score_courant = -(nb_tresor_total * 10000) + dist_to_next;
+                } else {
+                    score_courant = 1000 + dist_to_first;
+                }
+
+                if (score_courant < meilleur_score)
+                {
+                    meilleur_score = score_courant;
+                    meilleur_type = type;
+                    meilleur_indice = indice;
+                    meilleure_rotation = rotation;
+                    meilleur_chemin_complet = path_courant;
+                    meilleur_treasures_collected = nb_tresor_total;
+                }
+            }
+        }
+    }
+
+    if (meilleur_type != -1)
+    {
+        joueur_actuel->type_insertion = meilleur_type;
+        joueur_actuel->indice = meilleur_indice;
+        joueur_actuel->rotation = meilleure_rotation;
+        joueur_actuel->x = meilleur_chemin_complet.x[meilleur_chemin_complet.count - 1];
+        joueur_actuel->y = meilleur_chemin_complet.y[meilleur_chemin_complet.count - 1];
+    }
+    else
+    {
+        joueur_actuel->type_insertion = 0;
+        joueur_actuel->indice = 1;
+        joueur_actuel->rotation = 0;
+        meilleur_chemin_complet.x[0] = joueur_actuel->x;
+        meilleur_chemin_complet.y[0] = joueur_actuel->y;
+        meilleur_chemin_complet.count = 1;
+        meilleur_chemin_complet.total_bonus_dist = 0;
+        meilleur_treasures_collected = 0;
+    }
+}
+    int meilleur_score = 99999;
+    int meilleur_type = -1;
+    int meilleur_indice = -1;
+    int meilleure_rotation = -1;
+
+    meilleur_chemin_complet.count = 0;
+    meilleur_chemin_complet.total_bonus_dist = 0;
+    meilleur_treasures_collected = 0;
 
     // printf("===== DEBUT SIMULATION (Calcul du prochain coup) =====\n");
 
@@ -367,111 +552,184 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
                         joueur_virtuel.y = laby.sizeY - 1;
                 }
 
-                // Calculer la position post-insertion du trésor
-                int destX_local = destX;
-                int destY_local = destY;
-
-                if ((type == INSERT_LIGNE_GAUCHE) && (destY_local == indice))
-                {
-                    destX_local++;
-                    if (destX_local >= laby.sizeX)
-                        destX_local = 0;
-                }
-                else if ((type == INSERT_LIGNE_DROITE) && (destY_local == indice))
-                {
-                    destX_local--;
-                    if (destX_local < 0)
-                        destX_local = laby.sizeX - 1;
-                }
-                else if ((type == INSERT_COLONNE_HAUT) && (destX_local == indice))
-                {
-                    destY_local++;
-                    if (destY_local >= laby.sizeY)
-                        destY_local = 0;
-                }
-                else if ((type == INSERT_COLONNE_BAS) && (destX_local == indice))
-                {
-                    destY_local--;
-                    if (destY_local < 0)
-                        destY_local = laby.sizeY - 1;
+                // Sauvegarde de l'état propre du labyrinthe post-insertion
+                int grid_backup[21][13];
+                for (int y = 0; y < laby.sizeY; y++) {
+                    for (int x = 0; x < laby.sizeX; x++) {
+                        grid_backup[x][y] = laby.copy_laby_update[x][y];
+                    }
                 }
 
-                // Lancement du BFS avec la position correcte du trésor
-                bool chemin_existe = phaseExpansion(&laby, &joueur_virtuel, destX_local, destY_local);
+                // Localiser tous les trésors sur la grille après insertion
+                int tresor_x[26], tresor_y[26];
+                localiser_tresors(&laby, tresor_x, tresor_y, laby.tour_joueur);
 
-                int score_courant = 0;
-                int cible_locale_x = joueur_virtuel.x;
-                int cible_locale_y = joueur_virtuel.y;
+                t_multi_path path_courant;
+                path_courant.count = 0;
+                path_courant.total_bonus_dist = 0;
 
-                if (chemin_existe)
-                {
-                    int len = phaseRemontee(&laby, &joueur_virtuel, destX_local, destY_local, chemin, 500);
-                    if (len <= 0)
-                        continue;
+                int current_target = tuiles_tresor.num_tresor;
+                int target_x = tresor_x[current_target];
+                int target_y = tresor_y[current_target];
 
-                    score_courant = len;
+                bool premier_atteint = false;
+                int dist_to_first = 9999;
 
-                    // SÉCURITÉ : Au lieu d'envoyer le joueur directement sur le trésor (destX, destY)
-                    // qui peut souffrir d'un problème d'inversion d'axe dans ta structure globale,
-                    // on le place sur la coordonnée finale validée par le BFS lui-même.
-                    cible_locale_x = destX_local;
-                    cible_locale_y = destY_local;
-                }
-                else
-                {
-                    if (meilleur_est_complet)
-                        continue;
+                if (target_x != -1 && target_y != -1) {
+                    // Restaurer la grille propre avant le BFS
+                    for (int y = 0; y < laby.sizeY; y++) {
+                        for (int x = 0; x < laby.sizeX; x++) {
+                            laby.copy_laby_update[x][y] = grid_backup[x][y];
+                        }
+                    }
 
-                    int min_distance_manhattan = 9999;
+                    premier_atteint = phaseExpansion(&laby, &joueur_virtuel, target_x, target_y);
+                    if (premier_atteint) {
+                        int path_len = phaseRemontee(&laby, &joueur_virtuel, target_x, target_y, chemin, 500);
+                        if (path_len >= 0) {
+                            path_courant.x[path_courant.count] = target_x;
+                            path_courant.y[path_courant.count] = target_y;
+                            path_courant.count++;
 
-                    for (int y = 0; y < laby.sizeY; y++)
-                    {
-                        for (int x = 0; x < laby.sizeX; x++)
-                        {
-                            if (laby.copy_laby_update[x][y] > 0)
-                            {
-                                int dist_manhattan = abs(x - destX_local) + abs(y - destY_local);
-                                if (dist_manhattan < min_distance_manhattan)
-                                {
-                                    min_distance_manhattan = dist_manhattan;
-                                    cible_locale_x = x;
-                                    cible_locale_y = y;
+                            current_target++;
+                            while (current_target <= 24) {
+                                int next_x = tresor_x[current_target];
+                                int next_y = tresor_y[current_target];
+                                if (next_x == -1 || next_y == -1) break;
+
+                                t_joueur pos_last;
+                                pos_last.x = path_courant.x[path_courant.count - 1];
+                                pos_last.y = path_courant.y[path_courant.count - 1];
+
+                                // Restaurer la grille propre avant chaque nouveau BFS
+                                for (int y = 0; y < laby.sizeY; y++) {
+                                    for (int x = 0; x < laby.sizeX; x++) {
+                                        laby.copy_laby_update[x][y] = grid_backup[x][y];
+                                    }
+                                }
+
+                                if (phaseExpansion(&laby, &pos_last, next_x, next_y)) {
+                                    int next_len = phaseRemontee(&laby, &pos_last, next_x, next_y, chemin, 500);
+                                    if (path_courant.total_bonus_dist + next_len <= 9) {
+                                        path_courant.x[path_courant.count] = next_x;
+                                        path_courant.y[path_courant.count] = next_y;
+                                        path_courant.count++;
+                                        path_courant.total_bonus_dist += next_len;
+                                        current_target++;
+                                    } else {
+                                        break;
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            if (current_target <= 24) {
+                                int next_x = tresor_x[current_target];
+                                int next_y = tresor_y[current_target];
+                                if (next_x != -1 && next_y != -1) {
+                                    t_joueur pos_last;
+                                    pos_last.x = path_courant.x[path_courant.count - 1];
+                                    pos_last.y = path_courant.y[path_courant.count - 1];
+
+                                    // Restaurer la grille propre avant le BFS de rapprochement
+                                    for (int y = 0; y < laby.sizeY; y++) {
+                                        for (int x = 0; x < laby.sizeX; x++) {
+                                            laby.copy_laby_update[x][y] = grid_backup[x][y];
+                                        }
+                                    }
+
+                                    phaseExpansion(&laby, &pos_last, next_x, next_y);
+
+                                    int min_dist_manhattan = 9999;
+                                    int best_cx = pos_last.x;
+                                    int best_cy = pos_last.y;
+                                    int remaining_steps = 9 - path_courant.total_bonus_dist;
+
+                                    for (int y = 0; y < laby.sizeY; y++) {
+                                        for (int x = 0; x < laby.sizeX; x++) {
+                                            int val = laby.copy_laby_update[x][y];
+                                            if (val > 0) {
+                                                int steps = val - 1;
+                                                if (steps <= remaining_steps) {
+                                                    int dist = abs(x - next_x) + abs(y - next_y);
+                                                    if (dist < min_dist_manhattan) {
+                                                        min_dist_manhattan = dist;
+                                                        best_cx = x;
+                                                        best_cy = y;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (best_cx != pos_last.x || best_cy != pos_last.y) {
+                                        path_courant.x[path_courant.count] = best_cx;
+                                        path_courant.y[path_courant.count] = best_cy;
+                                        path_courant.count++;
+                                        path_courant.total_bonus_dist += (laby.copy_laby_update[best_cx][best_cy] - 1);
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        // Restaurer la grille propre avant le BFS de rapprochement initial
+                        for (int y = 0; y < laby.sizeY; y++) {
+                            for (int x = 0; x < laby.sizeX; x++) {
+                                 laby.copy_laby_update[x][y] = grid_backup[x][y];
+                            }
+                        }
+
+                        phaseExpansion(&laby, &joueur_virtuel, target_x, target_y);
+                        int min_dist_manhattan = 9999;
+                        int best_cx = joueur_virtuel.x;
+                        int best_cy = joueur_virtuel.y;
+
+                        for (int y = 0; y < laby.sizeY; y++) {
+                            for (int x = 0; x < laby.sizeX; x++) {
+                                if (laby.copy_laby_update[x][y] > 0) {
+                                    int dist = abs(x - target_x) + abs(y - target_y);
+                                    if (dist < min_dist_manhattan) {
+                                        min_dist_manhattan = dist;
+                                        best_cx = x;
+                                        best_cy = y;
+                                    }
+                                }
+                            }
+                        }
+                        path_courant.x[0] = best_cx;
+                        path_courant.y[0] = best_cy;
+                        path_courant.count = 1;
+                        dist_to_first = min_dist_manhattan;
                     }
-                    score_courant = 1000 + min_distance_manhattan;
                 }
 
-                if (score_courant < meilleur_len)
+                int score_courant = 0;
+                int treasures_collected = 0;
+                if (premier_atteint) {
+                    treasures_collected = current_target - tuiles_tresor.num_tresor;
+                    int dist_to_next = 0;
+                    if (current_target <= 24) {
+                        int final_x = path_courant.x[path_courant.count - 1];
+                        int final_y = path_courant.y[path_courant.count - 1];
+                        int next_x = tresor_x[current_target];
+                        int next_y = tresor_y[current_target];
+                        dist_to_next = abs(final_x - next_x) + abs(final_y - next_y);
+                    }
+                    score_courant = - (treasures_collected * 10000) + dist_to_next;
+                } else {
+                    score_courant = 1000 + dist_to_first;
+                }
+
+                if (score_courant < meilleur_score)
                 {
-                    meilleur_len = score_courant;
+                    meilleur_score = score_courant;
                     meilleur_type = type;
                     meilleur_indice = indice;
                     meilleure_rotation = rotation;
-                    meilleur_est_complet = chemin_existe;
 
-                    destination_finale_x = cible_locale_x;
-                    destination_finale_y = cible_locale_y;
-
-                    // if (chemin_existe)
-                    //     printf("\n>>> CHEMIN COMPLET TROUVÉ ! Longueur = %d pas\n", score_courant);
-                    // else
-                    //     printf("\n>>> MEILLEUR RAPPROCHEMENT ! Distance restante = %d\n", score_courant - 1000);
-
-                    // printf("--- MAP DU MEILLEUR COUP TOURNÉ (Type:%d, Indice:%d, Rot:%d) ---\n", type, indice, rotation);
-                    for (int y = 0; y < laby.sizeY; y++)
-                    {
-                        for (int x = 0; x < laby.sizeX; x++)
-                        {
-                            // if (laby.copy_laby_update[x][y] == 0)
-                            //     printf("  . ");
-                            // else
-                            //     printf("%3d ", laby.copy_laby_update[x][y]);
-                        }
-                        // printf("\n");
-                    }
-                    // printf("----------------------------------------------------------------------\n\n");
+                    meilleur_chemin_complet = path_courant;
+                    meilleur_treasures_collected = treasures_collected;
                 }
             }
         }
@@ -483,27 +741,21 @@ if (joueur_actuel->x == tuiles_tresor.x[tuiles_tresor.num_tresor] &&
         joueur_actuel->indice = meilleur_indice;
         joueur_actuel->rotation = meilleure_rotation;
 
-        // Correction de l'inversion potentielle :
-        // Si le serveur a planté sur un coup (5,5) alors qu'on demandait (5,6),
-        // cela montre un décalage structurel ou une inversion X/Y dans le traitement réseau.
-        // On s'assure de l'affectation stricte :
-        joueur_actuel->x = destination_finale_x;
-        joueur_actuel->y = destination_finale_y;
+        joueur_actuel->x = meilleur_chemin_complet.x[meilleur_chemin_complet.count - 1];
+        joueur_actuel->y = meilleur_chemin_complet.y[meilleur_chemin_complet.count - 1];
     }
     else
     {
-        joueur_actuel->type_insertion = (interdit_type == 0 && interdit_indice == 1) ? 0 : 0;
-        joueur_actuel->indice = (interdit_type == 0 && interdit_indice == 1) ? 3 : 1;
+        joueur_actuel->type_insertion = 0;
+        joueur_actuel->indice = 1;
         joueur_actuel->rotation = 0;
+        
+        meilleur_chemin_complet.x[0] = joueur_actuel->x;
+        meilleur_chemin_complet.y[0] = joueur_actuel->y;
+        meilleur_chemin_complet.count = 1;
+        meilleur_chemin_complet.total_bonus_dist = 0;
+        meilleur_treasures_collected = 0;
     }
-
-    // printf("\n========== MOVE APPLIQUÉ AU JOUEUR ==========\n");
-    // printf("Type choisi : %d\n", joueur_actuel->type_insertion);
-    // printf("Indice      : %d\n", joueur_actuel->indice);
-    // printf("Rotation    : %d\n", joueur_actuel->rotation);
-    // printf("Nouvel X/Y  : (%d, %d)\n", joueur_actuel->x, joueur_actuel->y);
-
-    // printf("==============================================\n");
 }
 
 int main()
@@ -520,7 +772,7 @@ int main()
 
     // waitForLabyrinth(type_partie_choisi[(BOT_ALEATOIRE)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
     // waitForLabyrinth(type_partie_choisi[(BOT_BASIC)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
-    waitForLabyrinth(type_partie_choisi[(BOT_BASIC+1)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+    waitForLabyrinth("TRAINING REGULAR", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
 #if DEBUG_DATA_STRUCT_LABY
     printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
@@ -608,20 +860,25 @@ int mon_numero_joueur = laby.tour_joueur;
 
             update_labyV2(&laby, &yek, &yek);
 
-            sprintf(yek.coup_envoi, "%d %d %d %d %d",
+            // Construction du coup avec les étapes multiples !
+            int len_env = sprintf(yek.coup_envoi, "%d %d %d",
                     yek.type_insertion,
                     yek.indice,
-                    yek.rotation,
-                    targetX,
-                    targetY);
+                    yek.rotation);
+            for (int i = 0; i < meilleur_chemin_complet.count; i++) {
+                len_env += sprintf(yek.coup_envoi + len_env, " %d %d", meilleur_chemin_complet.x[i], meilleur_chemin_complet.y[i]);
+            }
 
             // printf("Entre coup chef : ");
 
             resultat_move = sendMove(yek.coup_envoi, laby.message_serveur);
 
-            // Mettre à jour la position avec la vraie destination
+            // Mettre à jour la position avec la vraie destination finale
             yek.x = targetX;
             yek.y = targetY;
+
+            // Mettre à jour le numéro de trésor visé
+            tuiles_tresor.num_tresor += meilleur_treasures_collected;
 
             // laby.tour_joueur = 1;
             tour_actuel = (mon_numero_joueur == 0) ? 1 : 0;
@@ -638,12 +895,24 @@ int mon_numero_joueur = laby.tour_joueur;
 
             // laby.tour_joueur = 0;
             tour_actuel = mon_numero_joueur;
-            // On met à jour les coordonnées de l'adversaire
-            sscanf(adversaire.coup_recu, "%d %d %d %d %d", &adversaire.type_insertion, &adversaire.indice, &adversaire.rotation, &adversaire.x, &adversaire.y);
-            // update_laby(&laby, &adversaire);
+            // On met à jour les coordonnées de l'adversaire en tenant compte des étapes multiples
+            int type_ins, ind_ins, rot_ins;
+            int offset = 0;
+            if (sscanf(adversaire.coup_recu, "%d %d %d%n", &type_ins, &ind_ins, &rot_ins, &offset) >= 3) {
+                adversaire.type_insertion = type_ins;
+                adversaire.indice = ind_ins;
+                adversaire.rotation = rot_ins;
+                char *ptr = adversaire.coup_recu + offset;
+                int tx, ty;
+                int read_bytes;
+                while (sscanf(ptr, "%d %d%n", &tx, &ty, &read_bytes) == 2) {
+                    adversaire.x = tx;
+                    adversaire.y = ty;
+                    ptr += read_bytes;
+                }
+            }
             update_labyV2(&laby, &adversaire, &yek);
 
-            // printf("L'adversaire a joué vers : type : %d indice : %d rotation: %d x : %d y : %d\n", adversaire.type_insertion, adversaire.indice, adversaire.rotation, adversaire.x, adversaire.y);
             determiner_coup_interdit(adversaire.type_insertion, adversaire.indice, &coup_interdit_type, &coup_interdit_indice);
         }
         // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);

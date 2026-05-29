@@ -21,3 +21,6 @@ t_laby laby = {0};
 t_tuiles tuiles_tresor = {0};
 
 // t_tuiles_extra tuiles_extra = {0};
+
+t_multi_path meilleur_chemin_complet = {0};
+int meilleur_treasures_collected = 0;

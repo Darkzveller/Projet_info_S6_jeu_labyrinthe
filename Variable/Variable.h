@@ -11,7 +11,7 @@
 // Define permettant d'activer ou desactiver les prints
 #define DEBUG_CONNECT_SERV 0
 #define DEBUG_DATA_STRUCT_LABY 0
-#define ACTIVE_AFFICHAGE_LABY 1
+#define ACTIVE_AFFICHAGE_LABY 0
 #define DEBUG_POS_TUILES 1
 
 // Information du serveur
@@ -134,5 +134,15 @@ extern t_tuiles tuiles_tresor;
 //     int y;
 // } t_coord;
 // extern t_coord chemin_a_dessiner[500];
+
+typedef struct {
+    int count;          // number of coordinate pairs
+    int x[30];          // x coordinates of the stops
+    int y[30];          // y coordinates of the stops
+    int total_bonus_dist; // distance from first treasure to last stop
+} t_multi_path;
+
+extern t_multi_path meilleur_chemin_complet;
+extern int meilleur_treasures_collected;
 
 #endif

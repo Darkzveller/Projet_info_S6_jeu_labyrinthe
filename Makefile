@@ -1,13 +1,12 @@
 # Compilateur et options
 # --------------------------
 CC = gcc                 # Le compilateur C à utiliser (ici GCC)
-INCLUDE_DIRS_LIBS := $(shell find . -type d -not -path "./.*") # Répertoires supplémentaires pour les bibliothèques (vide ici)
-CFLAGS = -g -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS_LIBS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak# Options de compilation : -Wall active tous les avertissements, -MMD génère automatiquement un fichier .d pour les dépendances des fichiers .h
-LIBS =# Bibliothèques à lier (ici X11 pour l'affichage graphique)
-LIBSDIR =# Répertoires supplémentaires pour les bibliothèques (vide ici)
+INCLUDE_DIRS_LIBS = Variable Mouvement clientApi labyrinthAPI Affichage_labyrinthe .
+CFLAGS = -g -Wall -MMD $(patsubst %,-I%,$(INCLUDE_DIRS_LIBS)) -fsanitize=address -fsanitize=undefined -fsanitize=leak
+LIBS =
+LIBSDIR =
 # Fichiers du projet
-# SRC = $(wildcard *.c Variable/*.c)    
-SRC = $(shell find . -not -path '*/\.*' -name "*.c") # Liste de tous les fichiers source .c (ignore dossiers cachés)
+SRC = main.c Variable/Variable.c Mouvement/Mouvement.c clientApi/clientAPI.c labyrinthAPI/labyrinthAPI.c Affichage_labyrinthe/affichage.c
 
 OBJ = $(SRC:.c=.o)       # Liste des fichiers objets correspondants aux .c
 DEP = $(OBJ:.o=.d)       # Fichiers de dépendances générés automatiquement
