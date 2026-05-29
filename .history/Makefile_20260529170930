@@ -7,7 +7,7 @@ LIBS =# Bibliothèques à lier (ici X11 pour l'affichage graphique)
 LIBSDIR =# Répertoires supplémentaires pour les bibliothèques (vide ici)
 # Fichiers du projet
 # SRC = $(wildcard *.c Variable/*.c)    
-SRC = $(shell find . -not -path '*/\.*' -name "*.c") # Liste de tous les fichiers source .c (ignore dossiers cachés)
+SRC = $(shell find . -name "*.c") # Liste de tous les fichiers source .c du dossier courant
 
 OBJ = $(SRC:.c=.o)       # Liste des fichiers objets correspondants aux .c
 DEP = $(OBJ:.o=.d)       # Fichiers de dépendances générés automatiquement

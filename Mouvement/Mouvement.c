@@ -477,13 +477,13 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
     return true;
 }
 
-int phaseExpansion(t_laby *laby, t_joueur *yek, t_tuiles *tuiles_tresor)
+int phaseExpansion(t_laby *laby, t_joueur *yek, int target_x, int target_y)
 {
     int sizeX = laby->sizeX;
     int sizeY = laby->sizeY;
 
-    int coord_x_arrivee = tuiles_tresor->x[tuiles_tresor->num_tresor];
-    int coord_y_arrivee = tuiles_tresor->y[tuiles_tresor->num_tresor];
+    int coord_x_arrivee = target_x;
+    int coord_y_arrivee = target_y;
 
     int tab[sizeX + 1][sizeY + 1];
     for (int y = 0; y < sizeY; y++)
