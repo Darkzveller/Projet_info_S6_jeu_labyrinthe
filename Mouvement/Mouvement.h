@@ -20,4 +20,7 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny);
 int phaseExpansion(t_laby *laby, t_joueur *yek, int target_x, int target_y);
 void localiser_tresors(t_laby *laby_state, int *tresor_x, int *tresor_y, int mon_numero_joueur);
 
+int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *chemin, int max_chemin);
+void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation);
+void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int interdit_indice);
 #endif

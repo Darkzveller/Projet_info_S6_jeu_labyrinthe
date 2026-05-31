@@ -144,5 +144,7 @@ typedef struct {
 
 extern t_multi_path meilleur_chemin_complet;
 extern int meilleur_treasures_collected;
+extern int coup_interdit_type ;
+extern int coup_interdit_indice;
 
 #endif
