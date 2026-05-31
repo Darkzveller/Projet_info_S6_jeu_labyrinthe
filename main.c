@@ -264,6 +264,12 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
     meilleur_chemin_complet.count = 0;
     meilleur_chemin_complet.total_bonus_dist = 0;
     meilleur_treasures_collected = 0;
+    int bonus_max = (tuiles_tresor.num_tresor == 1) ? 9 : 0;
+    // DEBUG début de tour
+    printf("[DEBUG START] num_tresor=%d bonus_max=%d\n", tuiles_tresor.num_tresor, bonus_max);
+    fflush(stdout);
+
+
 
     // printf("===== DEBUT SIMULATION (Calcul du prochain coup) =====\n");
 
@@ -367,7 +373,7 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
 
                                 if (phaseExpansion(&laby, &pos_last, next_x, next_y)) {
                                     int next_len = phaseRemontee(&laby, &pos_last, next_x, next_y, chemin, 500);
-                                    if (path_courant.total_bonus_dist + next_len <= 9) {
+                                    if (bonus_max > 0 && path_courant.total_bonus_dist + next_len <= bonus_max) {
                                         path_courant.x[path_courant.count] = next_x;
                                         path_courant.y[path_courant.count] = next_y;
                                         path_courant.count++;
@@ -401,7 +407,8 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
                                     int min_dist_manhattan = 9999;
                                     int best_cx = pos_last.x;
                                     int best_cy = pos_last.y;
-                                    int remaining_steps = 9 - path_courant.total_bonus_dist;
+                                    int remaining_steps = bonus_max - path_courant.total_bonus_dist;
+
 
                                     for (int y = 0; y < laby.sizeY; y++) {
                                         for (int x = 0; x < laby.sizeX; x++) {
@@ -466,7 +473,7 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
                 if (premier_atteint) {
                     treasures_collected = current_target - tuiles_tresor.num_tresor;
                     int dist_to_next = 0;
-                    if (current_target <= 24) {
+                    if (bonus_max > 0 && current_target <= 24) {
                         int final_x = path_courant.x[path_courant.count - 1];
                         int final_y = path_courant.y[path_courant.count - 1];
                         int next_x = tresor_x[current_target];
@@ -513,6 +520,10 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
         meilleur_chemin_complet.total_bonus_dist = 0;
         meilleur_treasures_collected = 0;
     }
+    //DEBUG
+    printf("[DEBUG END] num_tresor=%d bonus_max=%d collected=%d\n",
+        tuiles_tresor.num_tresor, bonus_max, meilleur_treasures_collected);
+    fflush(stdout);
 }
 
 int main()
