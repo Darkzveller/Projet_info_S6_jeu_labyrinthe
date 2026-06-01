@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "J'ai ranger les fonction et j'ai ajouter les free pour laby + compteur de victoire et de defaite" && git push
+git status && git add . && git commit -m "Bot qui peut se connecter et deconnecter tout seul" && git push

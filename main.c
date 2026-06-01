@@ -9,8 +9,8 @@
 #include "Mouvement.h"
 #include <time.h>
 
-int nbr_vicoire = 0;
-int nbr_defait = 0;
+int nbr_vicoire = 1;
+int nbr_defait = 1;
 void delay(int number_of_seconds)
 {
     // Converting time into milli_seconds
@@ -26,6 +26,8 @@ void delay(int number_of_seconds)
 
 int main()
 {
+        while (1)
+    {
     printf("caca\n");
 #if DEBUG_CONNECT_SERV
     printf("Tentative de connexion au serveur \n");
@@ -35,8 +37,7 @@ int main()
     printf("Connecter au serveur de jeu en tant que %s \n", nom_bot_moi);
     printf("Choix partie %s\n", type_partie_choisi[BOT_BOUGE_PAS]);
 #endif
-    while (1)
-    {
+
         // waitForLabyrinth(type_partie_choisi[(BOT_ALEATOIRE)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth(type_partie_choisi[(BOT_BASIC)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth("TRAINING BASIC", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
@@ -214,7 +215,7 @@ int main()
             else
             {
                 printf("Dommage... L'adversaire a trouvé son dernier trésor et a GAGNÉ. 😞\n");
-                printf("Nombre de victoire actuelle est de %d \n", nbr_defait++);
+                printf("Nombre de defaite actuelle est de %d \n", nbr_defait++);
             }
         }
         else if (resultat_move == LOSING_MOVE)
@@ -247,9 +248,11 @@ int main()
         laby.copy_laby_update = NULL;
 
         free(laby.labyData);
-    }
     // Affichage de la raison officielle envoyée par le serveur
     printf("Raison du serveur : %s\n", laby.message_serveur);
     closeConnection();
+    delay(10000);
+    }
+
     return 0;
 }
