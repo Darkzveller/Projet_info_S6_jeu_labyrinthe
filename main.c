@@ -9,8 +9,8 @@
 #include "Mouvement.h"
 #include <time.h>
 
-int nbr_vicoire = 1;
-int nbr_defait = 1;
+int nbr_vicoire = 0;
+int nbr_defait =  0;
 void delay(int number_of_seconds)
 {
     // Converting time into milli_seconds
@@ -86,9 +86,9 @@ int main()
         while (resultat_move == NORMAL_MOVE)
         {
             // printf("\nAffichage du labyrinthe :\n");
-            delay(1);
-            printLabyrinth();
-            delay(1);
+            // delay(1);
+            // printLabyrinth();
+            // delay(1);
 
             // afficheLabyrinthe(laby.laby_update, 500, laby.sizeX, laby.sizeY, yek.x, yek.y, adversaire.x, adversaire.y);
             // printf("labydata \n%d\n", laby.labyData);
@@ -161,7 +161,7 @@ int main()
 
                 // On récupère le coup de l'adversaire
                 resultat_move = getMove(adversaire.coup_recu, laby.message_serveur);
-                printf("L'adversaire a joué : %s\n", adversaire.coup_recu);
+                // printf("L'adversaire a joué : %s\n", adversaire.coup_recu);
 
                 // laby.tour_joueur = 0;
                 tour_actuel = mon_numero_joueur;
@@ -210,29 +210,30 @@ int main()
             if (dernier_joueur_actif == mon_numero_joueur)
             {
                 printf("Félicitations ! Vous avez GAGNÉ la partie ! 🎉\n");
-                printf("Nombre de victoire actuelle est de %d \n", nbr_vicoire++);
+                // printf("Nombre de victoire actuelle est de %d \n", nbr_vicoire++);
             }
             else
             {
                 printf("Dommage... L'adversaire a trouvé son dernier trésor et a GAGNÉ. 😞\n");
-                printf("Nombre de defaite actuelle est de %d \n", nbr_defait++);
+                // printf("Nombre de defaite actuelle est de %d \n", nbr_defait++);
             }
         }
         else if (resultat_move == LOSING_MOVE)
         {
             if (dernier_joueur_actif == mon_numero_joueur)
             {
-                printf("Vous avez PERDU... Vous avez joué un coup invalide ou fait un timeout. ❌\n");
+                // printf("Vous avez PERDU... Vous avez joué un coup invalide ou fait un timeout. ❌\n");
             }
             else
             {
-                printf("Victoire par forfait ! L'adversaire a commis une erreur et a PERDU. 🏆\n");
+                // printf("Victoire par forfait ! L'adversaire a commis une erreur et a PERDU. 🏆\n");
             }
         }
         else
         {
             printf("Fin de partie inconnue ou interruption serveur.\n");
         }
+        printf("Resultat : %d victoire et %d defaite \n",nbr_vicoire,nbr_defait);
         int size = ((laby.sizeX * laby.sizeY + 5) * 11);
 
         for (int i = 0; i < size; i++)
@@ -251,7 +252,7 @@ int main()
     // Affichage de la raison officielle envoyée par le serveur
     printf("Raison du serveur : %s\n", laby.message_serveur);
     closeConnection();
-    delay(10000);
+    delay(5000);
     }
 
     return 0;

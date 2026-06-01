@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "Bot qui peut se connecter et deconnecter tout seul" && git push
+git status && git add . && git commit -m "Ajout deconnexion reconnexion bot" && git push

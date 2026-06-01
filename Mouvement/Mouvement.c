@@ -656,8 +656,8 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
     meilleur_treasures_collected = 0;
     int bonus_max = (tuiles_tresor.num_tresor == 1) ? 9 : 0;
     // DEBUG début de tour
-    printf("[DEBUG START] num_tresor=%d bonus_max=%d\n", tuiles_tresor.num_tresor, bonus_max);
-    fflush(stdout);
+    // printf("[DEBUG START] num_tresor=%d bonus_max=%d\n", tuiles_tresor.num_tresor, bonus_max);
+    // fflush(stdout);
 
     // printf("===== DEBUT SIMULATION (Calcul du prochain coup) =====\n");
 
@@ -947,8 +947,8 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
         meilleur_treasures_collected = 0;
     }
     // DEBUG
-    printf("[DEBUG END] num_tresor=%d bonus_max=%d collected=%d\n",
-           tuiles_tresor.num_tresor, bonus_max, meilleur_treasures_collected);
+    // printf("[DEBUG END] num_tresor=%d bonus_max=%d collected=%d\n",
+    //        tuiles_tresor.num_tresor, bonus_max, meilleur_treasures_collected);
     fflush(stdout);
 }
 
