@@ -41,8 +41,8 @@ int main()
         // waitForLabyrinth(type_partie_choisi[(BOT_ALEATOIRE)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth(type_partie_choisi[(BOT_BASIC)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth("TRAINING BASIC", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
-        waitForLabyrinth("TRAINING REGULAR", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
-        // waitForLabyrinth("", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+        // waitForLabyrinth("TRAINING REGULAR", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+        waitForLabyrinth("", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
 #if DEBUG_DATA_STRUCT_LABY
         printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
@@ -211,11 +211,14 @@ int main()
             {
                 printf("Félicitations ! Vous avez GAGNÉ la partie ! 🎉\n");
                 // printf("Nombre de victoire actuelle est de %d \n", nbr_vicoire++);
+                nbr_vicoire+=1;
+
             }
             else
             {
                 printf("Dommage... L'adversaire a trouvé son dernier trésor et a GAGNÉ. 😞\n");
                 // printf("Nombre de defaite actuelle est de %d \n", nbr_defait++);
+                nbr_defait+=1;
             }
         }
         else if (resultat_move == LOSING_MOVE)

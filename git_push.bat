@@ -1,2 +1,2 @@
 echo off
-git status && git add . && git commit -m "Ajout deconnexion reconnexion bot" && git push
+git status && git add . && git commit -m "Probleme incrementation victoire defait regler" && git push
