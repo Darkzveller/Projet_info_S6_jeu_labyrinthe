@@ -44,9 +44,7 @@ int main()
         // waitForLabyrinth("TRAINING REGULAR", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         waitForLabyrinth("", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
-#if DEBUG_DATA_STRUCT_LABY
         printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
-#endif
 
         taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
         laby.labyData = malloc(taille_buffer * sizeof(char));
