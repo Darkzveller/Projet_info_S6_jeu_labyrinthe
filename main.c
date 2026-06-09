@@ -26,8 +26,7 @@ void delay(int number_of_seconds)
 
 int main()
 {
-        while (1)
-    {
+    
     printf("caca\n");
 #if DEBUG_CONNECT_SERV
     printf("Tentative de connexion au serveur \n");
@@ -37,14 +36,16 @@ int main()
     printf("Connecter au serveur de jeu en tant que %s \n", nom_bot_moi);
     printf("Choix partie %s\n", type_partie_choisi[BOT_BOUGE_PAS]);
 #endif
-
+    while (1)
+    {
         // waitForLabyrinth(type_partie_choisi[(BOT_ALEATOIRE)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth(type_partie_choisi[(BOT_BASIC)], laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth("TRAINING BASIC", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
         // waitForLabyrinth("TRAINING REGULAR", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
-        waitForLabyrinth("", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+        // waitForLabyrinth("", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
+        waitForLabyrinth("TOURNAMENT EI3", laby.labyrinthName, &laby.sizeX, &laby.sizeY);
 
-        printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
+        // printf("Partie trouveer : %s il est de taille en x : %d et y : %d)\n", laby.labyrinthName, laby.sizeX, laby.sizeY);
 
         taille_buffer = (laby.sizeX * laby.sizeY + 5) * 11;
         laby.labyData = malloc(taille_buffer * sizeof(char));
@@ -252,9 +253,9 @@ int main()
         free(laby.labyData);
     // Affichage de la raison officielle envoyée par le serveur
     printf("Raison du serveur : %s\n", laby.message_serveur);
+    }
     closeConnection();
     delay(5000);
-    }
 
     return 0;
 }
