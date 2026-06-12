@@ -1,32 +1,24 @@
 #include "Mouvement.h"
-
-// void position_tresor(t_laby *laby, t_tuiles *tuiles)
-// {
-//     // On parcourt la matrice réelle [x][y] mise à jour
-//     for (int y = 0; y < laby->sizeY; y++)
-//     {
-//         for (int x = 0; x < laby->sizeX; x++)
-//         {
-//             // 1. On récupère la valeur binaire de la tuile actuelle
-//             int tuile_cle = laby->laby_update[x][y];
-
-//             // 2. On extrait l'ID de l'item (les 8 bits de poids faible)
-//             int item = tuile_cle & 0xFF;
-
-//             // 3. Si un trésor (item >= 1) est présent sur cette tuile
-//             if (item >= 1)
-//             {
-//                 tuiles->x[item] = x;
-//                 tuiles->y[item] = y;
-
-//                 // On garde l'information des murs de la tuile au cas où
-//                 tuiles->presence_mur[item] = tuile_cle;
-//             }
-//         }
-//     }
-
-//     // Surtout PAS de "tuiles->num_tresor = 1;" ici !
-// }
+/*******************************************************
+ * position_tresor
+ *
+ * Rôle :
+ *   Analyse la grille du labyrinthe et enregistre
+ *   les positions des trésors dans la structure tuiles.
+ *
+ * Paramètres :
+ *   - laby : état actuel du labyrinthe
+ *   - tuiles : structure de stockage des trésors
+ *   - mon_numero_joueur : permet d’adapter l’indexation
+ *     des trésors selon le joueur (0 ou 1)
+ *
+ * Retour :
+ *   void
+ *
+ * Remarques :
+ *   - Gère l’inversion des indices pour mon joueur
+ *   - Je m'en sers plus dans les faits car j'avais un bug bizzare avec cette fonction 
+ *******************************************************/
 void position_tresor(t_laby *laby, t_tuiles *tuiles, int mon_numero_joueur)
 {
     // 1. On parcourt la matrice réelle [x][y] mise à jour
@@ -47,12 +39,12 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles, int mon_numero_joueur)
 
                 if (mon_numero_joueur == 0)
                 {
-                    // Joueur 0 : Pas de changement (Trésor 1 va dans l'indice 1) 
+                    // Joueur 0 : Pas de changement (Trésor 1 va dans l'indice 1)
                     item_virtuel = item_reel;
                 }
                 else
                 {
-                    // Joueur 1 : Inversion (Trésor 24 va dans l'indice 1, le 23 dans l'indice 2, etc.) 
+                    // Joueur 1 : Inversion (Trésor 24 va dans l'indice 1, le 23 dans l'indice 2, etc.)
                     item_virtuel = 25 - item_reel;
                 }
 
@@ -69,6 +61,25 @@ void position_tresor(t_laby *laby, t_tuiles *tuiles, int mon_numero_joueur)
     // Surtout PAS de "tuiles->num_tresor = 1;" ici !
 }
 
+
+/*******************************************************
+ * print_laby
+ *
+ * OBJECTIF :
+ *   Afficher le labyrinthe en console pour débogage.
+ *   Permet de visualiser les murs et les items.
+ *
+ * PARAMÈTRES :
+ *   - laby : structure du labyrinthe à afficher
+ *   - activate : active ou désactive l'affichage
+ *
+ * SORTIE :
+ *   - Aucun
+ *
+ * POINTS IMPORTANTS :
+ *   - Fonction uniquement destinée au debug
+ *   - Affiche aussi la tuile "extra"
+ *******************************************************/
 void print_laby(t_laby *laby, bool activate)
 {
     if (!activate)
@@ -108,6 +119,25 @@ void print_laby(t_laby *laby, bool activate)
         printf("\n");
     }
 }
+
+/*******************************************************
+ * transfer_labydata_to_laby_update
+ *
+ * OBJECTIF :
+ *   Convertir les données brutes reçues du serveur
+ *   en matrice exploitable (laby_update).
+ *
+ * PARAMÈTRES :
+ *   - laby : structure contenant les données brutes
+ *
+ * SORTIE :
+ *   - Initialise laby_update et extra
+ *
+ * POINTS IMPORTANTS :
+ *   - Encode les murs et items en bits
+ *   - Alloue dynamiquement les matrices
+ *   - Est appelée à chaque update serveur soit a chaque nouveau match
+ *******************************************************/
 void transfer_labydata_to_laby_update(t_laby *laby)
 {
     char *ptr = laby->labyData;
@@ -168,6 +198,24 @@ void transfer_labydata_to_laby_update(t_laby *laby)
     }
 }
 
+/*******************************************************
+ * update_labyV2
+ *
+ * OBJECTIF :
+ *   Mettre à jour le labyrinthe après une action :
+ *   rotation, insertion et déplacement joueur.
+ *
+ * PARAMÈTRES :
+ *   - laby : labyrinthe à modifier
+ *   - joueur_qui_joue : action effectuée
+ *   - yek : mon bot à mettre à jour au niveau de saposition
+ *
+ * SORTIE :
+ *   - Modifie laby_update
+ *   - Modifie extra
+ *   - Met à jour la position de yek si nécessaire
+ *
+ *******************************************************/
 void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
 {
     // 1. Gestion de la rotation de l'extra (Inchangé, c'est très bien)
@@ -203,7 +251,7 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
             if (yek->x == laby->sizeX - 1) // Tu étais sur la case qui sort à droite
                 yek->x = 0;                // Tu réapparais sur la case insérée à gauche
             else
-                yek->x++;                  // Sinon, tu glisses simplement vers la droite
+                yek->x++; // Sinon, tu glisses simplement vers la droite
         }
 
         for (int x = laby->sizeX - 1; x > 0; x--)
@@ -220,10 +268,10 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         // Si TU es sur la ligne poussée vers la gauche
         if (yek->y == y_cible)
         {
-            if (yek->x == 0)               // Tu étais sur la case qui sort à gauche
-                yek->x = laby->sizeX - 1;  // Tu réapparais sur la case insérée à droite
+            if (yek->x == 0)              // Tu étais sur la case qui sort à gauche
+                yek->x = laby->sizeX - 1; // Tu réapparais sur la case insérée à droite
             else
-                yek->x--;                  // Sinon, tu glisses vers la gauche
+                yek->x--; // Sinon, tu glisses vers la gauche
         }
 
         for (int x = 0; x < laby->sizeX - 1; x++)
@@ -243,7 +291,7 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
             if (yek->y == laby->sizeY - 1) // Tu étais sur la case qui sort en bas
                 yek->y = 0;                // Tu réapparais sur la case insérée en haut
             else
-                yek->y++;                  // Sinon, tu glisses vers le bas
+                yek->y++; // Sinon, tu glisses vers le bas
         }
 
         for (int y = laby->sizeY - 1; y > 0; y--)
@@ -260,10 +308,10 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         // Si TU es sur la colonne poussée vers le haut
         if (yek->x == x_cible)
         {
-            if (yek->y == 0)               // Tu étais sur la case qui sort en haut
-                yek->y = laby->sizeY - 1;  // Tu réapparais sur la case insérée en bas
+            if (yek->y == 0)              // Tu étais sur la case qui sort en haut
+                yek->y = laby->sizeY - 1; // Tu réapparais sur la case insérée en bas
             else
-                yek->y--;                  // Sinon, tu glisses vers le haut
+                yek->y--; // Sinon, tu glisses vers le haut
         }
 
         for (int y = 0; y < laby->sizeY - 1; y++)
@@ -273,6 +321,22 @@ void update_labyV2(t_laby *laby, t_joueur *joueur_qui_joue, t_joueur *yek)
         laby->extra.presence_mur = temp;
     }
 }
+/*******************************************************
+ * copie_laby
+ *
+ * OBJECTIF :
+ *   Créer une copie de l'état actuel du labyrinthe
+ *   pour permettre des simulations sans modification réelle.
+ *
+ * PARAMÈTRES :
+ *   - laby : structure source
+ *
+ * SORTIE :
+ *   - Remplit copy_laby_update et copy_extra
+ *
+ * POINTS IMPORTANTS :
+ *   - Utilisé avant chaque simulation de coup pour réinitialiser la simulation précédente
+ *******************************************************/
 void copie_laby(t_laby *laby)
 {
     for (int y = 0; y < laby->sizeY; y++)
@@ -286,8 +350,26 @@ void copie_laby(t_laby *laby)
     laby->copy_extra = laby->extra;
 }
 
-// Renvoie les coordonnées de la case voisine à partir d'une case (x, y) et d'une direction d
-// d = 0 : Nord, 1 : Est, 2 : Sud, 3 : Ouest
+/*******************************************************
+ * voisin_accessible
+ *
+ * OBJECTIF :
+ *   Vérifier si une case voisine est accessible
+ *   en fonction des murs et des limites du labyrinthe.
+ *
+ * PARAMÈTRES :
+ *   - laby : labyrinthe utilisé pour le calcul
+ *   - x, y : position actuelle
+ *   - dir : direction (NORD, EST, SUD, OUEST)
+ *   - nx, ny : coordonnées de la case voisine
+ *
+ * SORTIE :
+ *   - true si déplacement possible
+ *   - false sinon
+ *
+ * POINTS IMPORTANTS :
+ *   - Empêche les sorties hors grille
+ *******************************************************/
 bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
 {
     static const int dx[4] = {0, 1, 0, -1};
@@ -327,7 +409,27 @@ bool voisin_accessible(t_laby *laby, int x, int y, int dir, int *nx, int *ny)
 
     return true;
 }
-
+/*******************************************************
+ * phaseExpansion
+ *
+ * OBJECTIF :
+ *   Calculer une carte de distances via un BFS
+ *   entre le joueur et mon TRESOR.
+ *
+ * PARAMÈTRES :
+ *   - laby : ma structure du labyrinthe
+ *   - yek : position de départ
+ *   - target_x, target_y : cible
+ *
+ * SORTIE :
+ *   - Remplit copy_laby_update avec distances qui ma struture de labyrinhte sur lequel je vais enregistré mes coups
+ *   - Retourne 1 si atteignable, 0 sinon
+ *
+ * POINTS IMPORTANTS :
+ *   - BFS en grille (4 directions)
+ *   - Complexité O(n²)
+ *   - J'ai essayer de ne pas trop changer la fonction par rapport a ce que je faisais au dernier semestre par peur de tout casser
+ *******************************************************/
 int phaseExpansion(t_laby *laby, t_joueur *yek, int target_x, int target_y)
 {
     int sizeX = laby->sizeX;
@@ -394,9 +496,33 @@ int phaseExpansion(t_laby *laby, t_joueur *yek, int target_x, int target_y)
     return tab[coord_x_arrivee][coord_y_arrivee] > 0;
 }
 
+/*******************************************************
+ * localiser_tresors
+ *
+ * OBJECTIF :
+ *   Parcourir le labyrinthe et enregistrer les positions
+ *   de tous les trésors dans deux tableaux (x et y).
+ *
+ * PARAMÈTRES :
+ *   - laby_state : état actuel du labyrinthe
+ *   - tresor_x : tableau des coordonnées X des trésors
+ *   - tresor_y : tableau des coordonnées Y des trésors
+ *   - mon_numero_joueur : permet d’adapter l’indexation
+ *     des trésors selon le joueur (0 ou 1)
+ *
+ * SORTIE :
+ *   - Remplit tresor_x et tresor_y avec les positions
+ *   - Met -1 pour les trésors absents
+ *
+ * POINTS IMPORTANTS :
+ *   - Lecture dans copy_laby_update
+ *   - Extraction de l’item via masque 0xFF
+ *   - Inversion de l’ordre des trésors pour le joueur 1
+ *******************************************************/
 void localiser_tresors(t_laby *laby_state, int *tresor_x, int *tresor_y, int mon_numero_joueur)
 {
-    for (int i = 0; i <= 25; i++) {
+    for (int i = 0; i <= 25; i++)
+    {
         tresor_x[i] = -1;
         tresor_y[i] = -1;
     }
@@ -421,6 +547,27 @@ void localiser_tresors(t_laby *laby_state, int *tresor_x, int *tresor_y, int mon
     }
 }
 
+/*******************************************************
+ * determiner_coup_interdit
+ *
+ * OBJECTIF :
+ *   Calculer le coup interdit en réponse à l’action
+ *   de l’adversaire.
+ *
+ * PARAMÈTRES :
+ *   - type_adversaire : type d’insertion joué par l’adversaire
+ *   - indice_adversaire : indice de ligne/colonne joué
+ *   - coup_interdit_type : pointeur vers le type interdit
+ *   - coup_interdit_indice : pointeur vers l’indice interdit
+ *
+ * SORTIE :
+ *   - Modifie coup_interdit_type et coup_interdit_indice
+ *
+ * POINTS IMPORTANTS :
+ *   - L’indice est repris tel quel
+ *   - Le type est inversé via XOR (^ 1)
+ *   - Utilisé pour éviter les coups immédiatement contrables et autres raisons
+ *******************************************************/
 void determiner_coup_interdit(int type_adversaire, int indice_adversaire, int *coup_interdit_type, int *coup_interdit_indice)
 {
     // On utilise l'astérisque pour modifier la valeur stockée à l'adresse mémoire
@@ -430,6 +577,28 @@ void determiner_coup_interdit(int type_adversaire, int indice_adversaire, int *c
     *coup_interdit_type = type_adversaire ^ 1;
 }
 
+/*******************************************************
+ * phaseRemontee
+ *
+ * OBJECTIF :
+ *   Reconstruire un chemin en remontant la carte
+ *   de distances générée par BFS.
+ *
+ * PARAMÈTRES :
+ *   - laby copy update : labyrinthe contenant les distances
+ *   - yek : position de départ
+ *   - target_x, target_y : destination, mon trésor
+ *   - chemin : tableau de directions résultat
+ *   - max_chemin : taille maximale du buffer
+ *
+ * SORTIE :
+ *   - Longueur du chemin trouvé
+ *   - Remplit le tableau chemin[]
+ *
+ * POINTS IMPORTANTS :
+ *   - Reconstruction à partir des valeurs décroissantes
+ *   - Inversion finale du chemin
+ *******************************************************/
 int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *chemin, int max_chemin)
 {
     int sizeX = laby->sizeX;
@@ -537,6 +706,25 @@ int phaseRemontee(t_laby *laby, t_joueur *yek, int target_x, int target_y, int *
 
     return idx; // Renvoie la taille finale du chemin trouvé
 }
+/*******************************************************
+ * essaie_insertion
+ *
+ * OBJECTIF :
+ *   Simuler une insertion de ligne ou colonne
+ *   dans le labyrinthe.
+ *
+ * PARAMÈTRES :
+ *   - laby-copy_update : labyrinthe simulé
+ *   - type_insertion : type de mouvement
+ *   - indice : ligne ou colonne concernée
+ *   - rotation : rotation de la tuile extra
+ *
+ * SORTIE :
+ *   - Modifie copy_laby_update et copy_extra
+ *
+ * POINTS IMPORTANTS :
+ *   - Simulation complète du déplacement du plateau
+ *******************************************************/
 void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation)
 {
     // 1. Gestion de la rotation (Ton code est parfait ici)
@@ -643,6 +831,26 @@ void essaie_insertion(t_laby *laby, int type_insertion, int indice, int rotation
     }
 }
 
+/*******************************************************
+ * simulate_chemin_court
+ *
+ * OBJECTIF :
+ *   Tester tous les coups possibles et choisir
+ *   le meilleur selon un score de simulation.
+ *
+ * PARAMÈTRES :
+ *   - joueur_actuel : état du joueur
+ *   - interdit_type : coup interdit
+ *   - interdit_indice : indice interdit
+ *
+ * SORTIE :
+ *   - Met à jour le joueur avec le meilleur coup
+ *
+ * POINTS IMPORTANTS :
+ *   - Combine simulation + BFS + scoring
+ *   - Fonction principale de décision
+ *   - Contient des printf mise en commentaires, fautes de temps j'ai pas pu leurs assigner un Define pour les activer ou non
+ *******************************************************/
 void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int interdit_indice)
 {
     int chemin[500];
@@ -951,4 +1159,3 @@ void simulate_chemin_court(t_joueur *joueur_actuel, int interdit_type, int inter
     //        tuiles_tresor.num_tresor, bonus_max, meilleur_treasures_collected);
     fflush(stdout);
 }
-
